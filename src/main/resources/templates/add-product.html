@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Add Product ‑ SpeedIt</title>
+
+  <section layout:fragment="pageStyles">
+    <link rel="stylesheet" th:href="@{/css/add-product.css}">
+  </section>
+</head>
+<body>
+
+  <section layout:fragment="content">
+    <div class="form-container product-form">
+      <h2>Add New Product</h2>
+      <form th:action="@{/products/add}" method="post">
+        <div id="option-groups-container">
+          <div class="option-group">
+            <div class="form-group">
+              <label>Option Category</label>
+              <div class="select-input-box">
+                <select name="categoryIds" class="category-select" required>
+                  <option value="" disabled selected>Select a category</option>
+                  <option th:each="cat : ${categories}"
+                          th:value="${cat.optionCategoryId}"
+                          th:text="${cat.categoryName}"></option>
+                  <option value="new">+ New Category</option>
+                </select>
+                <div class="new-category-input" style="display:none">
+                  <input type="text"
+                        name="newCategoryNames"
+                        placeholder="Enter new category">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Option</label>
+              <div class="select-input-box">
+                <select name="optionIds" class="option-select" required>
+                  <option value="" disabled selected>Select an option</option>
+                </select>
+                <div class="new-option-input" style="display:none">
+                  <input type="text"
+                        name="newOptionValues"
+                        placeholder="Enter new option value">
+                </div>
+              </div>
+            </div>
+
+            <button type="button"
+                    class="remove-option-group btn btn-danger">Remove</button>
+          </div>
+        </div>
+
+        <button type="button" class="add-option-group btn btn-secondary">
+          Add Another Option Set
+        </button>
+
+        <div class="form-group">
+          <label for="price">Price</label>
+          <input type="number"
+                 id="price"
+                 name="price"
+                 min="0"
+                 required>
+        </div>
+
+        <div th:if="${error}"
+             class="error-message"
+             th:text="${error}"></div>
+
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </form>
+    </div>
+  </section>
+
+  <section layout:fragment="pageScripts">
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+        // categoryId -> [ {optionId, optionValue}, … ]
+        const categoryOptionsMap = /*[[${categoryOptionsMap}]]*/ {};
+        console.log('❯ categoryOptionsMap:', categoryOptionsMap);
+      /*]]>*/
+    </script>
+
+    <script th:src="@{/js/add-product.js}"></script>
+  </section>
+</body>
+</html>

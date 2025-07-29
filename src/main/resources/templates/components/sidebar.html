@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedIt</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/form.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+</head>
+<body>
+<div th:fragment="sidebar">
+
+  <!-- Sidebar -->
+  <nav class="sidebar collapsed" id="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">SpeedIt</span>
+      <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li>
+        <a th:href="@{/products/add}">
+          <span class="sidebar-label">Add Product</span>
+          <i class="sidebar-icon" data-lucide="plus"></i>
+        </a>
+      </li>
+      <li>
+        <a th:href="@{/products/search}">
+          <span class="sidebar-label">Search Products</span>
+          <i class="sidebar-icon" data-lucide="search"></i>
+        </a>
+      </li>
+      <li>
+        <a th:href="@{/products/load}">
+          <span class="sidebar-label">Load Products</span>
+          <i class="sidebar-icon" data-lucide="package"></i>
+        </a>
+      </li>
+      <li>
+        <a th:href="@{/inventory/add}">
+          <span class="sidebar-label">Add Inventory</span>
+          <i class="sidebar-icon" data-lucide="warehouse"></i>
+        </a>
+      </li>
+
+      <li class="expandable">
+        <div class="group-title sidebar-label" onclick="toggleGroup(this)">
+          <span>Manage Orders</span>
+          <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+        </div>
+        <ul class="sub-links">
+          <li><a class="sidebar-label" th:href="@{/orders/create}">Create Order</a></li>
+          <li><a class="sidebar-label" th:href="@{/orders/confirm}">Order Confirmation & Allocation</a></li>
+          <li><a class="sidebar-label" th:href="@{/orders/track}">Track Orders</a></li>
+          <li><a class="sidebar-label" th:href="@{/orders/dashboard}">Order Dashboard</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a th:href="@{/notifications}">
+          <span class="sidebar-label">Notifications</span>
+          <i class="sidebar-icon" data-lucide="bell"></i>
+        </a>
+      </li>
+      <li>
+        <a th:href="@{/reports}">
+          <span class="sidebar-label">Reports</span>
+          <i class="sidebar-icon" data-lucide="chart-column-big"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+</div>  
+</body>
+</html>

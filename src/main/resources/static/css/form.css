@@ -1,0 +1,103 @@
+/* Container for any form page (login, register, add-product) */
+.form-container {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(41, 50, 65, 0.1);
+  max-width: 600px;
+  width: 90%;
+  margin: 2rem auto;
+  box-sizing: border-box;
+}
+
+/* Standard form-group spacing */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+/* Labels */
+label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+
+/* Restore your exact input + select styling */
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--muted-color);
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Buttons in forms */
+.btn {
+  padding: 0.8rem 1.2rem;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-block;
+  /* Ensure they don’t stretch full width by default */
+  width: auto;
+  margin-top: 0.5rem;
+}
+
+/* Primary, Secondary, Danger variants */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+.btn-primary:hover {
+  background-color: var(--secondary-color);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
+.btn-danger {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+/* Error / success messages under inputs */
+.error-message {
+  color: var(--accent-color);
+  font-size: 14px;
+  margin-top: 0.5rem;
+}
+.success-message {
+  color: green;
+  font-size: 14px;
+  margin-top: 0.5rem;
+}
+
+/* Responsive: for wide screens, lay out product-form groups horizontally */
+@media (min-width: 768px) {
+  .product-form .form-group {
+    display: flex;
+    align-items: center;
+  }
+  .product-form .form-group label {
+    width: 30%;
+    margin: 0;
+  }
+  .product-form .form-group .select-input-box {
+    width: 70%;
+  }
+}
+
+/* On narrow screens, buttons stretch full width */
+@media (max-width: 767px) {
+  .btn {
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+}

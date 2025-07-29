@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title layout:title-pattern="$CONTENT_TITLE - SpeedIt">SpeedIt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Global + shared CSS -->
+  <link rel="stylesheet" th:href="@{/css/global.css}">
+  <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+  <link rel="stylesheet" th:href="@{/css/form.css}">
+
+  <!-- Page-specific CSS -->
+  <section layout:fragment="pageStyles"></section>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar -->
+  <div th:replace="components/sidebar :: sidebar"></div>
+
+  <!-- Main content area -->
+  <main class="main-content collapsed">
+    <section layout:fragment="content">
+      <!-- Default content (can be replaced by child pages) -->
+    </section>
+  </main>
+</div>
+
+<!-- Global scripts -->
+<script th:src="@{/js/sidebar.js}"></script>
+
+<!-- for loading icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/js/global.js"></script>
+
+<!-- Page-specific scripts -->
+<section layout:fragment="pageScripts"></section>
+
+</body>
+</html>

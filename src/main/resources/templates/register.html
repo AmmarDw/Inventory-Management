@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - SpeedIt</title>
+  <link rel="stylesheet" th:href="@{/css/global.css}">
+  <link rel="stylesheet" th:href="@{/css/form.css}">
+</head>
+<body>
+<div class="container">
+  <div class="login-card form-container">
+    <h2 class="login-title">Create Account</h2>
+    <p class="login-subtitle">Register to start using SpeedIt</p>
+
+    <form th:action="@{/register}" th:object="${user}" method="post" class="login-form">
+      <div class="form-group">
+        <label th:for="*{name}">Name</label>
+        <input type="text" th:field="*{name}" placeholder="Full name" required>
+        <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label th:for="*{email}">Email</label>
+        <input type="email" th:field="*{email}" placeholder="you@example.com" required>
+        <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label th:for="*{confirmEmail}">Confirm Email</label>
+        <input type="email" th:field="*{confirmEmail}" placeholder="Re-enter your email" required>
+        <div th:if="${#fields.hasErrors('confirmEmail')}" th:errors="*{confirmEmail}" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label th:for="*{phoneNumber}">Phone Number</label>
+        <input type="text" th:field="*{phoneNumber}" placeholder="10-digit number" required>
+        <div th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label th:for="*{password}">Password</label>
+        <input type="password" th:field="*{password}" placeholder="Enter a strong password" required>
+        <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label th:for="*{confirmPassword}">Confirm Password</label>
+        <input type="password" th:field="*{confirmPassword}" placeholder="Re-enter your password" required>
+        <div th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label th:for="*{role}">Role</label>
+        <select th:field="*{role}" required>
+          <option value="" disabled selected>Select a role</option>
+          <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+        </select>
+        <div th:if="${#fields.hasErrors('role')}" th:errors="*{role}" class="error-message"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+
+    <p class="footer-text">Already have an account? <a th:href="@{/login}">Login here</a></p>
+  </div>
+</div>
+</body>
+</html>

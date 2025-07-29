@@ -1,0 +1,18 @@
+/* assuming sidebar */
+/* .main-content {
+  margin-left: 250px;
+  padding: 2rem;
+} */
+
+/* add some breathing room between the buttons */
+.remove-option-group {
+  display: inline-block;
+  margin: 0.5rem 0 0.5rem;
+}
+.add-option-group {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+
+/* .option-set class removed because it's unused */
