@@ -1,0 +1,28 @@
+.select-with-filter {
+  display: flex;
+}
+
+.select-with-filter .choices {
+  flex: 1;
+}
+
+.remove-stock-group {
+  margin-top: 0.5rem;
+  margin-left: 1rem;
+}
+
+.add-stock-group {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+
+/* .filter-btn {
+  margin-left: 0.5rem;
+  background: var(--secondary-color);
+  border: none;
+  color: var(--text-color);
+  padding: 0 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+} */

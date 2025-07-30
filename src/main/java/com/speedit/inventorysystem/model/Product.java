@@ -44,5 +44,13 @@ public class Product extends BaseEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    public String getProductOptionsDisplay() {
+        if (productOptions == null || productOptions.isEmpty()) return "";
+        return productOptions.stream()
+                .map(ProductOption::getOptionValue)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
+    }
 }
 

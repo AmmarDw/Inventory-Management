@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Load New Products – SpeedIt</title>
+  
+  <section layout:fragment="pageStyles">
+    <link rel="stylesheet" th:href="@{/css/load-new-products.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  </section>
+</head>
+<body>
+
+<section layout:fragment="content">
+  <div class="form-container">
+    <h2>Load New Products into Inventory</h2>
+    <form th:action="@{/inventory-stock/load}" th:object="${loadDto}" method="post">
+      
+      <!-- 1. Select Inventory -->
+      <div class="form-group">
+        <label for="inventory">Inventory</label>
+        <div class="select-with-filter">
+          <select th:field="*{inventoryId}" id="inventory" required>
+            <option value="" disabled>Select inventory</option>
+            <option th:each="inv : ${inventories}"
+                    th:value="${inv.inventoryId}"
+                    th:text="${inv.inventoryType.getDisplayName + ' – ' + inv.inventoryId + ' – ' + inv.location}"></option>
+          </select>
+          <!-- <button type="button" class="filter-btn" id="filter-inventory-btn">🔍</button> -->
+        </div>
+        <div th:if="${#fields.hasErrors('inventoryId')}" class="error-message"
+             th:errors="*{inventoryId}"></div>
+      </div>
+
+      <!-- 2. Product + Amount Groups -->
+      <div id="stock-groups-container">
+        <div class="stock-group">
+          <div class="form-group">
+            <label>Product</label>
+            <div class="select-with-filter">
+              <select th:field="*{productIds}" class="product-select" required>
+                <option value="" disabled>Select product</option>
+                <option th:each="p : ${products}"
+                        th:value="${p.productId}"
+                        th:text="${p.productId + ' – ' + p.getProductOptionsDisplay}"></option>
+              </select>
+              <!-- <button type="button" class="filter-btn product-filter-btn">🔍</button> -->
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="number" th:field="*{amounts}" min="0" required>
+          </div>
+          <button type="button" class="remove-stock-group btn btn-danger">Remove</button>
+        </div>
+      </div>
+
+      <button type="button" class="add-stock-group btn btn-secondary">
+        Add Another Product
+      </button>
+
+      <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+      <button type="submit" class="btn btn-primary">Save Stocks</button>
+    </form>
+  </div>
+</section>
+
+<section layout:fragment="pageScripts">
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script th:src="@{/js/load-new-products.js}"></script>
+</section>
+</body>
+</html>
