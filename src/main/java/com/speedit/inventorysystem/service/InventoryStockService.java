@@ -62,8 +62,16 @@ public class InventoryStockService {
     public List<ProductStockDTO> getProductsForInventoryAndOrder(
             Integer inventoryId, Integer orderId) {
         logger.info("Loading products for inventory: {}, orderId: {}", inventoryId, orderId);
+
+        // Add debug logging for repository method
         List<ProductStockDTO> result = stockRepo.findProductsByInventoryAndOrder(inventoryId, orderId);
-        logger.info("Found {} products", result.size());
+        logger.info("Query result: {}", result);
+
+        // Check if any products have positive amounts
+        boolean hasPositiveAmounts = result.stream()
+                .anyMatch(dto -> dto.getAmount() > 0);
+
+        logger.info("Found {} products with positive amounts: {}", result.size(), hasPositiveAmounts);
         return result;
     }
 

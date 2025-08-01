@@ -113,20 +113,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (currentStep === 2) {
-      // Validate product amounts
       let valid = true;
+      const errors = [];
+      
       document.querySelectorAll('.transport-amount').forEach(input => {
-        const amount = parseInt(input.value);
+        const rawValue = input.value.trim();
+        let amount = parseInt(rawValue);
+        
+        // Handle empty/NaN values
+        if (rawValue === '' || isNaN(amount)) {
+          amount = 0;
+          input.value = '0'; // Set to zero for clarity
+        }
+        
         const max = parseInt(input.max);
         
-        if (isNaN(amount) || amount <= 0) {
-          alert(`Amount must be positive for product: ${input.dataset.productId}`);
+        if (amount < 0) {
+          errors.push(`Amount must be ≥ 0 for product: ${input.dataset.productId}`);
           valid = false;
         } else if (amount > max) {
-          alert(`Amount cannot exceed available stock (${max}) for product: ${input.dataset.productId}`);
+          errors.push(`Amount cannot exceed available stock (${max}) for product: ${input.dataset.productId}`);
           valid = false;
         }
       });
+      
+      if (errors.length > 0) {
+        alert(errors.join('\n'));
+      }
       
       if (!valid) return;
     }
@@ -250,10 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <label for="amount-${product.productId}">Amount to Unload</label>
             <input type="number" id="amount-${product.productId}" 
                    class="transport-amount" 
-                   min="1" max="${product.amount}" 
-                   value="${product.amount}"
-                   data-product-id="${product.productId}"
-                   required>
+                   min="0" max="${product.amount}" 
+                   value="0"
+                   data-product-id="${product.productId}">
           </div>
         `;
         productsContainer.appendChild(productDiv);
@@ -285,10 +297,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add product amounts
     document.querySelectorAll('.transport-amount').forEach(input => {
-      unloadData.products.push({
-        productId: parseInt(input.dataset.productId),
-        amount: parseInt(input.value)
-      });
+      const amount = parseInt(input.value);
+      if (amount > 0) {
+        unloadData.products.push({
+          productId: parseInt(input.dataset.productId),
+          amount: amount
+        });
+      }
     });
     
     try {

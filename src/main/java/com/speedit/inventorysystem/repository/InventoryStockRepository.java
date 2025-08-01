@@ -30,10 +30,11 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
             "p.productId, p, SUM(s.amount)) " +
             "FROM InventoryStock s " +
             "JOIN s.product p " +
-            "LEFT JOIN s.orderItem oi " +  // Changed to LEFT JOIN
+            "LEFT JOIN s.orderItem oi " +  // Add LEFT JOIN
             "WHERE s.inventory.inventoryId = :inventoryId " +
-            "AND ( (:orderId IS NULL AND oi IS NULL) " + // Available stock
-            "OR (:orderId IS NOT NULL AND oi.order.orderId = :orderId) ) " + // Order-bound
+            "AND ( (:orderId IS NULL AND oi IS NULL) " +
+            "OR (:orderId IS NOT NULL AND oi.order.orderId = :orderId) ) " +
+            "AND s.amount > 0 " +
             "GROUP BY p.productId, p")
     List<ProductStockDTO> findProductsByInventoryAndOrder(
             @Param("inventoryId") Integer inventoryId,
