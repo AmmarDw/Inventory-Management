@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Unload Products – SpeedIt</title>
+  
+  <section layout:fragment="pageStyles">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link rel="stylesheet" th:href="@{/css/unload-products.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  </section>
+</head>
+<body>
+
+<section layout:fragment="content">
+  <div class="form-container">
+    <h2>Unload Products from Inventory</h2>
+    
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+      <div class="step active" data-step="1">1</div>
+      <div class="step" data-step="2">2</div>
+      <div class="step" data-step="3">3</div>
+      <div class="step" data-step="4">4</div>
+    </div>
+    
+    <form id="unloadForm" method="post">
+      
+      <!-- Step 1: Select Source Inventory -->
+      <div class="form-step active" id="step1">
+        <div class="form-group">
+          <label for="sourceInventory">Source Inventory</label>
+          <select id="sourceInventory" required>
+            <option value="" disabled selected>Select source inventory</option>
+            <option th:each="inv : ${inventories}"
+                    th:value="${inv.inventoryId}"
+                    th:text="${inv.inventoryType.getDisplayName() + ' – ' + inv.inventoryId + ' – ' + inv.location}"></option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Step 2: Select Order/Available Stock -->
+      <div class="form-step" id="step2" style="display:none;">
+        <div class="form-group">
+          <label for="orderSelection">Select Order or Available Stock</label>
+          <select id="orderSelection" required>
+            <option value="" disabled selected>Loading options...</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Step 3: Select Products and Amounts -->
+      <div class="form-step" id="step3" style="display:none;">
+        <div id="products-container">
+          <!-- Products will be loaded via AJAX -->
+        </div>
+      </div>
+      
+      <!-- Step 4: Select Destination -->
+      <div class="form-step" id="step4" style="display:none;">
+        <div class="form-group">
+          <label>Destination Type</label>
+          <select id="destinationType" required>
+            <option value="" disabled selected>Select destination type</option>
+            <option value="inventory">Transfer to Another Inventory</option>
+            <option value="client">Deliver to Client</option>
+          </select>
+        </div>
+        
+        <div class="form-group" id="inventoryDestinationGroup" style="display:none;">
+          <label for="destinationInventory">Destination Inventory</label>
+          <select id="destinationInventory">
+            <option value="" disabled selected>Select destination inventory</option>
+            <!-- Filter out current source inventory -->
+            <option th:each="inv : ${inventories}"
+                    th:value="${inv.inventoryId}"
+                    th:text="${inv.inventoryType.getDisplayName() + ' – ' + inv.inventoryId + ' – ' + inv.location}"
+                    th:data-inv-id="${inv.inventoryId}"></option>
+          </select>
+        </div>
+        
+        <div class="form-group" id="clientDestinationGroup" style="display:none;">
+          <p>Delivering to client: <span id="clientName"></span></p>
+          <p>Order: <span id="orderIdDisplay"></span></p>
+          <p>Delivery Location: <span id="deliveryLocation"></span></p>
+        </div>
+      </div>
+      
+      <div class="form-navigation">
+        <button type="button" class="btn btn-secondary" id="prevBtn" style="display:none;">Previous</button>
+        <button type="button" class="btn btn-primary" id="nextBtn">Next</button>
+        <button type="submit" class="btn btn-success" id="submitBtn" style="display:none;">Complete Unload</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section layout:fragment="pageScripts">
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script th:inline="javascript">
+    const BASE_URL = /*[[@{/}]]*/ '';
+  </script>
+  <script th:src="@{/js/unload-products.js}"></script>
+</section>
+</body>
+</html>
