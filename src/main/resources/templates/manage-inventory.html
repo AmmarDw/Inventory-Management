@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Inventory Management ‑ SpeedIt</title>
+  
+  <section layout:fragment="pageStyles">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link rel="stylesheet" th:href="@{/css/management.css}">
+  </section>
+</head>
+<body>
+  <section layout:fragment="content">
+    <div class="management-container">
+      <div class="management-header">
+        <h1>Inventory Management</h1>
+        <!-- Updated Create New button -->
+        <button class="btn btn-primary btn-with-icon" id="createInventoryBtn">
+          <i class="icon" data-lucide="plus"></i>
+          <span style="padding-top: 2px;">Create New Inventory</span>
+        </button>
+      </div>
+      
+      <div class="management-tools">
+        <div class="search-container">
+          <input type="text" id="inventorySearch" placeholder="Search by ID or location...">
+          <i class="search-icon" data-lucide="search"></i>
+        </div>
+        <!-- Updated Filter button -->
+        <button class="btn btn-secondary btn-with-icon" id="filterBtn">
+          <i class="icon" width="20" height="20" data-lucide="filter"></i>
+          <span>Filters</span>
+        </button>
+      </div>
+      
+      <div class="table-container">
+        <table class="management-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="inventory : ${inventories}" 
+              th:data-type="${inventory.inventoryType.name()}"
+              th:data-status="${inventory.status}">
+              <td th:text="${inventory.inventoryId}">123</td>
+              <td th:text="${inventory.inventoryType.displayName}">Warehouse</td>
+              <td th:text="${inventory.location}">Main Warehouse A</td>
+              <td>
+                  <span th:class="${inventory.status} ? 'status-active' : 'status-inactive'"
+                        th:text="${inventory.status} ? 'Active' : 'Inactive'">
+                      Active
+                  </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon view-btn" th:data-id="${inventory.inventoryId}">
+                  <i data-lucide="eye"></i>
+                </button>
+                <button class="btn-icon edit-btn" th:data-id="${inventory.inventoryId}">
+                  <i data-lucide="pencil"></i>
+                </button>
+                <button class="btn-icon delete-btn" th:data-id="${inventory.inventoryId}">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Create/Edit Modal -->
+    <div class="modal" id="inventoryFormModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Create New Inventory</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="inventoryForm" method="post">
+            <input type="hidden" id="inventoryId" name="inventoryId">
+            
+            <div class="form-group">
+              <label for="modalInventoryType">Type</label>
+              <select id="modalInventoryType" name="inventoryType" required>
+                <option value="" disabled selected>Select a type</option>
+                <option th:each="t: ${types}"
+                        th:value="${t}"
+                        th:text="${t.displayName}"></option>
+              </select>
+              <div id="typeError" class="error-message"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="modalLocation">Location</label>
+              <input type="text" id="modalLocation" name="location" placeholder="Enter location" required>
+              <div id="locationError" class="error-message"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="modalStatus">Status</label>
+              <select id="modalStatus" name="status">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Inventory</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- View Modal -->
+    <div class="modal" id="viewModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Inventory Details</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">ID:</span>
+              <span id="viewId" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Type:</span>
+              <span id="viewType" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Location:</span>
+              <span id="viewLocation" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Status:</span>
+              <span id="viewStatus" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created At:</span>
+              <span id="viewCreatedAt" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created By:</span>
+              <span id="viewCreatedBy" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Updated At:</span>
+              <span id="viewUpdatedAt" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Updated By:</span>
+              <span id="viewUpdatedBy" class="detail-value"></span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <a id="stockLink" class="btn btn-secondary" href="#">
+              <i data-lucide="package"></i> View Inventory Stock
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Confirm Deletion</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete inventory <strong id="deleteInventoryName"></strong>?</p>
+          <p>This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary close-modal">Cancel</button>
+          <button id="confirmDelete" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Filter Modal -->
+    <div class="modal" id="filterModal">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h2>Filter Inventories</h2>
+              <button class="close-modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="filterType">Type</label>
+              <select id="filterType">
+                  <option value="">All Types</option>
+                  <option th:each="t: ${types}"
+                          th:value="${t.name()}" 
+                          th:text="${t.displayName}"></option>
+              </select>
+            </div>
+            <div class="form-group">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus">
+                    <option value="">All Statuses</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+              <button class="btn btn-secondary" id="resetFilters">Reset</button>
+              <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+          </div>
+      </div>
+  </div>
+  </section>
+  
+  <section layout:fragment="pageScripts">    
+    <!-- Custom script for inventory management -->
+    <script th:src="@{/js/inventory-management.js}"></script>
+    
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+    </script>
+  </section>
+</body>
+</html>

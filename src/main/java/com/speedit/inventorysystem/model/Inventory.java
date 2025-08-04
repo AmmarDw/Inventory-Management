@@ -1,5 +1,6 @@
 package com.speedit.inventorysystem.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.speedit.inventorysystem.enums.InventoryTypeEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -19,7 +20,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Inventory extends BaseEntity {
-
+ 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
     @GenericGenerator(name = "native", strategy = "native")
@@ -35,5 +36,6 @@ public class Inventory extends BaseEntity {
     private boolean status; // true = operating (default), false = out of service
 
     @OneToMany(mappedBy = "inventory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<InventoryStock> inventoryStocks = new ArrayList<>();
 }
