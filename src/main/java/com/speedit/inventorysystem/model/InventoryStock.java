@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
+// Add the @Table annotation here
 @Entity
+@Table(name = "inventory_stock") // Specify the correct table name
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,15 +27,16 @@ public class InventoryStock extends BaseEntity {
     @JoinColumn(name = "inventory_id", nullable = false)
     private Inventory inventory;
 
-    @ManyToOne @JoinColumn(name = "product_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     /** null = available stock; non‑null = reserved for a specific OrderItem */
-    @ManyToOne @JoinColumn(name = "order_item_id")
+    @ManyToOne
+    @JoinColumn(name = "order_item_id")
     private OrderItem orderItem;
 
     @NotNull
     @PositiveOrZero
     private Integer amount;
 }
-

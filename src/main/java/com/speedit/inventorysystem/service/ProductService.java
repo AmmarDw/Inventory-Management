@@ -1,8 +1,11 @@
 package com.speedit.inventorysystem.service;
 
+import com.speedit.inventorysystem.controller.ProductController.ProductRequest;
+import com.speedit.inventorysystem.dto.ProductDTO;
 import com.speedit.inventorysystem.model.OptionCategory;
 import com.speedit.inventorysystem.model.Product;
 import com.speedit.inventorysystem.model.ProductOption;
+import com.speedit.inventorysystem.repository.InventoryStockRepository;
 import com.speedit.inventorysystem.repository.OptionCategoryRepository;
 import com.speedit.inventorysystem.repository.ProductOptionRepository;
 import com.speedit.inventorysystem.repository.ProductRepository;
@@ -10,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
@@ -24,6 +29,9 @@ public class ProductService {
     @Autowired private OptionCategoryRepository optionCategoryRepository;
     @Autowired private ProductOptionRepository productOptionRepository;
     @Autowired private ProductRepository productRepository;
+    @Autowired private InventoryStockRepository inventoryStockRepository;
+
+    @Autowired private BarcodeService barcodeService;
 
     @Value("${barcode.prefix.country}")
     private String countryPrefix;
@@ -152,6 +160,128 @@ public class ProductService {
         }
 
         return (10 - (sum % 10)) % 10; // Final checksum digit
+    }
+
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    public Optional<ProductDTO> getProductDetails(Integer id, String countryPrefix, String companyPrefix) {
+        return productRepository.findById(id).map(product -> {
+            // Calculate total stock
+            int totalStock = inventoryStockRepository.sumStockByProductId(id);
+
+            // Prepare product options for DTO
+            List<ProductDTO.ProductOptionDTO> optionDTOs = product.getProductOptions().stream()
+                    .map(option -> new ProductDTO.ProductOptionDTO(
+                            option.getOptionId(),
+                            option.getOptionValue(),
+                            option.getCategory().getOptionCategoryId(),
+                            option.getCategory().getCategoryName()
+                    ))
+                    .collect(Collectors.toList());
+
+            // Build full barcode
+            String productRef = String.format("%05d", product.getProductId());
+            String fullBarcode = countryPrefix + companyPrefix + productRef + product.getBarcodeChecksum();
+
+            // Generate barcode image
+            byte[] barcodeImage = new byte[0];
+            try {
+                barcodeImage = barcodeService.generateBarcodeImage(fullBarcode, 300, 80);
+            } catch (Exception e) {
+                log.error("Error generating barcode for product {}", id, e);
+            }
+
+                return new ProductDTO(
+                    product.getProductId(),
+                    fullBarcode,
+                    product.getPrice(),
+                    optionDTOs,
+                    totalStock,
+                    product.getCreatedAt(),
+                    product.getCreatedBy(),
+                    product.getUpdatedAt(),
+                    product.getUpdatedBy(),
+                    barcodeImage
+            );
+        });
+    }
+
+    public ResponseEntity<?> createProductFromRequest(ProductRequest request) {
+        try {
+            List<ProductOption> options = buildProductOptions(
+                    request.getCategoryIds(),
+                    request.getOptionIds(),
+                    request.getNewCategoryNames(),
+                    request.getNewOptionValues(),
+                    null
+            );
+
+            if (options == null) {
+                return ResponseEntity.badRequest().body("Error creating options");
+            }
+
+            // Check for duplicate product
+            if (isDuplicateProduct(options)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Product with the same options already exists");
+            }
+
+            createProduct(request.getPrice(), options);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating product: " + e.getMessage());
+        }
+    }
+
+    public ResponseEntity<?> updateProduct(Integer id, ProductRequest request) {
+        try {
+            Optional<Product> existingProduct = productRepository.findById(id);
+            if (!existingProduct.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            List<ProductOption> options = buildProductOptions(
+                    request.getCategoryIds(),
+                    request.getOptionIds(),
+                    request.getNewCategoryNames(),
+                    request.getNewOptionValues(),
+                    null
+            );
+
+            if (options == null) {
+                return ResponseEntity.badRequest().body("Error creating options");
+            }
+
+            Product product = existingProduct.get();
+            product.setPrice(request.getPrice());
+            product.setProductOptions(options);
+            productRepository.save(product);
+
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating product: " + e.getMessage());
+        }
+    }
+
+    public ResponseEntity<?> deleteProduct(Integer id) {
+        try {
+            if (productRepository.existsById(id)) {
+                productRepository.deleteById(id);
+                return ResponseEntity.ok().build();
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting product: " + e.getMessage());
+        }
+    }
+
+    public List<Product> filterProducts(Long minPrice, Long maxPrice, Integer minStock, List<Integer> optionIds) {
+        return productRepository.findByFilters(minPrice, maxPrice, minStock, optionIds);
     }
 
     // Full barcode

@@ -25,7 +25,7 @@
             <option value="" disabled>Select inventory</option>
             <option th:each="inv : ${inventories}"
                     th:value="${inv.inventoryId}"
-                    th:text="${inv.inventoryType.getDisplayName + ' – ' + inv.inventoryId + ' – ' + inv.location}"></option>
+                    th:text="${inv.inventoryId + ' – ' + inv.inventoryType.getDisplayName + ' – ' + inv.location}"></option>
           </select>
           <!-- <button type="button" class="filter-btn" id="filter-inventory-btn">🔍</button> -->
         </div>

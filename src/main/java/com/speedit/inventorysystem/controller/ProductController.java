@@ -1,80 +1,111 @@
 package com.speedit.inventorysystem.controller;
 
-import com.speedit.inventorysystem.model.ProductOption;
-import com.speedit.inventorysystem.model.Product;
+import com.speedit.inventorysystem.dto.ProductDTO;
+import com.speedit.inventorysystem.model.*;
 import com.speedit.inventorysystem.service.ProductService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import jakarta.validation.Valid;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/products")
 public class ProductController {
 
-    private static final Logger log = LoggerFactory.getLogger(ProductController.class);
-
     @Autowired
     private ProductService productService;
 
-    @GetMapping("/add")
-    public String showAddProductForm(Model model) {
-        // 1. load all categories
-        Map<String, Object> data = productService.prepareAddProductData();
-        log.debug("▶ GET /products/add: loaded {} categories", ((List<?>) data.get("categories")).size());
-        log.debug("▶ GET /products/add: categories: {}", data.get("categories"));
-        log.debug("▶ GET /products/add: categoryOptionsMap = {}", data.get("categoryOptionsMap"));
+    @Value("${barcode.prefix.country}")
+    private String countryPrefix;
 
-        model.addAttribute("categories", data.get("categories"));
-        model.addAttribute("categoryOptionsMap", data.get("categoryOptionsMap"));
+    @Value("${barcode.prefix.company}")
+    private String companyPrefix;
 
-        return "add-product";
+    @GetMapping("/manage")
+    public String manageProducts(Model model) {
+        // Load products with stock information
+        List<Product> products = productService.getAllProducts();
+        Map<String, Object> formData = productService.prepareAddProductData();
+
+        model.addAttribute("products", products);
+        model.addAttribute("categories", formData.get("categories"));
+        model.addAttribute("categoryOptionsMap", formData.get("categoryOptionsMap"));
+        System.out.println("categoryOptionsMap: " + formData.get("categoryOptionsMap"));
+        return "manage-product";
     }
 
-    @PostMapping("/add")
-    public String addProduct(
-            @RequestParam(value = "categoryIds", required = false) List<String> categoryIds,
-            @RequestParam(value = "optionIds", required = false) List<String> optionIds,
-            @RequestParam(value = "newCategoryNames", required = false) List<String> newCategoryNames,
-            @RequestParam(value = "newOptionValues", required = false) List<String> newOptionValues,
-            @RequestParam("price") Long price,
-            Model model) {
+    @GetMapping("/{id}/details")
+    @ResponseBody
+    public ResponseEntity<ProductDTO> getProductDetails(@PathVariable Integer id) {
+        return productService.getProductDetails(id, countryPrefix, companyPrefix)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-        log.debug("▶ POST /products/add:");
-        log.debug("   categoryIds      = {}", categoryIds);
-        log.debug("   optionIds        = {}", optionIds);
-        log.debug("   newCategoryNames = {}", newCategoryNames);
-        log.debug("   newOptionValues  = {}", newOptionValues);
-        log.debug("   price            = {}", price);
+    @PostMapping("/create")
+    @ResponseBody
+    public ResponseEntity<?> createProduct(
+            @Valid @RequestBody ProductRequest request) {
+        return productService.createProductFromRequest(request);
+    }
 
-        if ((categoryIds == null || categoryIds.isEmpty()) &&
-                (newCategoryNames == null || newCategoryNames.isEmpty())) {
+    @PutMapping("/{id}/update")
+    @ResponseBody
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Integer id,
+            @Valid @RequestBody ProductRequest request) {
+        return productService.updateProduct(id, request);
+    }
 
-            model.addAttribute("error", "You must select or add at least one product option.");
-            return showAddProductForm(model);
+    @DeleteMapping("/{id}/delete")
+    @ResponseBody
+    public ResponseEntity<?> deleteProduct(@PathVariable Integer id) {
+        return productService.deleteProduct(id);
+    }
+
+    @PostMapping("/filter")
+    @ResponseBody
+    public ResponseEntity<List<Product>> filterProducts(@RequestBody ProductFilterRequest request) {
+        try {
+            // Pass all filter criteria from the request to the service method
+            List<Product> products = productService.filterProducts(
+                    request.getMinPrice(),
+                    request.getMaxPrice(),
+                    request.getMinStock(),
+                    request.getOptionIds()
+            );
+            return ResponseEntity.ok(products);
+        } catch (Exception e) {
+            // Log the exception
+            // Return an appropriate error response
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Or a more descriptive error
         }
+    }
 
-        List<ProductOption> finalOptions = productService.buildProductOptions(
-                categoryIds, optionIds, newCategoryNames, newOptionValues, model);
+    @Data
+    public static class ProductFilterRequest {
+        private Long minPrice;
+        private Long maxPrice;
+        private Integer minStock;
+        private List<Integer> optionIds;
+    }
 
-        // For duplicate category or option
-        if (finalOptions == null) {
-            return showAddProductForm(model);
-        }
-
-        boolean duplicate = productService.isDuplicateProduct(finalOptions);
-        if (duplicate) {
-            model.addAttribute("error", "Product with the same options already exists.");
-            return showAddProductForm(model);
-        }
-
-        productService.createProduct(price, finalOptions);
-        return "redirect:/products/list";
+    // Request DTO for product operations
+    @Data
+    public static class ProductRequest {
+        private List<String> categoryIds;
+        private List<String> optionIds;
+        private List<String> newCategoryNames;
+        private List<String> newOptionValues;
+        private Long price;
     }
 }

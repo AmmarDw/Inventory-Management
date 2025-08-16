@@ -58,4 +58,9 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
             @Param("inventoryId") Integer inventoryId,
             @Param("productId") Integer productId,
             @Param("orderId") Integer orderId);
+
+    // Method to sum ALL stock (available + reserved) for a given product ID
+    @Query("SELECT COALESCE(SUM(s.amount), 0) FROM InventoryStock s " +
+            "WHERE s.product.productId = :productId")
+    int sumStockByProductId(@Param("productId") Integer productId);
 }

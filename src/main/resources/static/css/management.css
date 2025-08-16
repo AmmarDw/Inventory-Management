@@ -222,3 +222,58 @@
       grid-template-columns: 1fr;
   }
 }
+
+
+/* Product-specific styles */
+.option-display {
+  margin-bottom: 0.5rem;
+}
+
+.option-category {
+  font-weight: 600;
+  color: #555;
+}
+
+.option-value {
+  color: #333;
+}
+
+#barcodeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+#barcodeText {
+  font-family: monospace;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  margin-top: 0.5rem;
+}
+
+.actions-container {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Form styling for option groups */
+.option-group {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+}
+
+.select-input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.new-category-input,
+.new-option-input {
+  margin-top: 0.5rem;
+}

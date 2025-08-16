@@ -1,3 +1,6 @@
+// Deprecated
+
+// add-product.js
 document.addEventListener('DOMContentLoaded', () => {
 
   console.log('DOM loaded, saw categoryOptionsMap:', categoryOptionsMap);

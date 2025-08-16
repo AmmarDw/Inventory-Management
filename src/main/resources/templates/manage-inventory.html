@@ -166,8 +166,9 @@
             </div>
           </div>
           <div class="detail-item">
-            <a id="stockLink" class="btn btn-secondary" href="#">
-              <i data-lucide="package"></i> View Inventory Stock
+            <a id="stockLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+              <i data-lucide="package"></i> 
+              <span>View Inventory Stock</span>
             </a>
           </div>
         </div>
@@ -226,7 +227,10 @@
   </div>
   </section>
   
-  <section layout:fragment="pageScripts">    
+  <section layout:fragment="pageScripts"> 
+    <!-- Shared management functions -->
+    <script th:src="@{/js/management.js}"></script>
+       
     <!-- Custom script for inventory management -->
     <script th:src="@{/js/inventory-management.js}"></script>
     

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Product Management ‑ SpeedIt</title>
+  
+  <section layout:fragment="pageStyles">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link rel="stylesheet" th:href="@{/css/management.css}">
+    <!-- Include JsBarcode for barcode generation -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  </section>
+</head>
+<body>
+  <section layout:fragment="content">
+    <div class="management-container">
+      <div class="management-header">
+        <h1>Product Management</h1>
+        <button class="btn btn-primary btn-with-icon" id="createProductBtn">
+          <i class="icon" data-lucide="plus"></i>
+          <span>Create New Product</span>
+        </button>
+      </div>
+      
+      <div class="management-tools">
+        <div class="search-container">
+          <input type="text" id="productSearch" placeholder="Search by ID or options...">
+          <i class="search-icon" data-lucide="search"></i>
+        </div>
+        <button class="btn btn-secondary btn-with-icon" id="filterBtn">
+          <i class="icon" width="20" height="20" data-lucide="filter"></i>
+          <span>Filters</span>
+        </button>
+      </div>
+      
+      <div class="table-container">
+        <table class="management-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Product Options</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="product : ${products}" 
+                th:data-price="${product.price}">
+              <td th:text="${product.productId}">123</td>
+              <td th:text="${product.getProductOptionsDisplay()}">Option 1, Option 2</td>
+              <td th:text="${'$' + product.price}">$19.99</td>
+              <td class="actions-cell">
+                <button class="btn-icon view-btn" th:data-id="${product.productId}">
+                  <i data-lucide="eye"></i>
+                </button>
+                <button class="btn-icon edit-btn" th:data-id="${product.productId}">
+                  <i data-lucide="pencil"></i>
+                </button>
+                <button class="btn-icon delete-btn" th:data-id="${product.productId}">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Create/Edit Modal -->
+    <div class="modal" id="productFormModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Create New Product</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="productForm" method="post">
+            <input type="hidden" id="productId" name="productId">
+            
+            <div id="option-groups-container">
+              <div class="option-group">
+                <div class="form-group">
+                  <label>Option Category</label>
+                  <div class="select-input-box">
+                    <select name="categoryIds" class="category-select" required>
+                      <option value="" disabled selected>Select a category</option>
+                      <option th:each="cat : ${categories}"
+                              th:value="${cat.optionCategoryId}"
+                              th:text="${cat.categoryName}"></option>
+                      <option value="new">+ New Category</option>
+                    </select>
+                    <div class="new-category-input" style="display:none">
+                      <input type="text"
+                            name="newCategoryNames"
+                            placeholder="Enter new category">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Option</label>
+                  <div class="select-input-box">
+                    <select name="optionIds" class="option-select" required>
+                      <option value="" disabled selected>Select an option</option>
+                    </select>
+                    <div class="new-option-input" style="display:none">
+                      <input type="text"
+                            name="newOptionValues"
+                            placeholder="Enter new option value">
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button"
+                        class="remove-option-group btn btn-danger">Remove</button>
+              </div>
+            </div>
+
+            <button type="button" class="add-option-group btn btn-secondary">
+              Add Another Option Set
+            </button>
+            
+            <div class="form-group">
+              <label for="modalPrice">Price</label>
+              <input type="number" id="modalPrice" name="price" min="0" required>
+              <div id="priceError" class="error-message"></div>
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Product</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- View Modal -->
+    <div class="modal" id="viewModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Product Details</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">ID:</span>
+              <span id="viewId" class="detail-value"></span>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Options:</span>
+              <div id="viewOptions" class="detail-value"></div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Price:</span>
+              <span id="viewPrice" class="detail-value"></span>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Total Stock:</span>
+              <span id="viewStock" class="detail-value"></span>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Barcode:</span>
+              <div class="detail-value">
+                  <div id="barcodeText"></div>
+                  <img id="barcodeImage" alt="Barcode" style="max-width: 100%;">
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Created At:</span>
+              <span id="viewCreatedAt" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created By:</span>
+              <span id="viewCreatedBy" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Updated At:</span>
+              <span id="viewUpdatedAt" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Updated By:</span>
+              <span id="viewUpdatedBy" class="detail-value"></span>
+            </div>
+          </div>
+          
+          <div class="detail-item actions-container">
+            <a id="inventoryStockLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+              <i data-lucide="package"></i> 
+              <span>View Inventory Stock</span>
+            </a>
+            
+            <a id="ordersLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+              <i data-lucide="shopping-cart"></i> 
+              <span>View Orders</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Confirm Deletion</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete product <strong id="deleteProductName"></strong>?</p>
+          <p>This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary close-modal">Cancel</button>
+          <button id="confirmDelete" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Filter Modal combine price/stock and option filters -->
+    <div class="modal" id="filterModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Filter Products</h2>
+          <button class="close-modal">&times;</button> <!-- Handled by management.js -->
+        </div>
+        <div class="modal-body">
+          <!-- Price and Stock Filters (from previous version) -->
+          <div class="form-group">
+            <label for="filterPriceMin">Min Price</label>
+            <input type="number" id="filterPriceMin" min="0" step="0.01" placeholder="Min price">
+          </div>
+          <div class="form-group">
+            <label for="filterPriceMax">Max Price</label>
+            <input type="number" id="filterPriceMax" min="0" step="0.01" placeholder="Max price">
+          </div>
+          <div class="form-group">
+            <label for="filterStockMin">Min Stock</label>
+            <input type="number" id="filterStockMin" min="0" placeholder="Min stock">
+          </div>
+          <hr> <!-- Separator for clarity -->
+          <!-- Option Filters (from new version) -->
+          <div id="filter-option-groups-container">
+            <div class="option-group">
+              <div class="form-group">
+                <label>Option Category</label>
+                <select class="category-select filter-category">
+                  <option value="" disabled selected>Select a category</option>
+                  <option th:each="cat : ${categories}" th:value="${cat.optionCategoryId}" th:text="${cat.categoryName}"></option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Option</label>
+                <select class="option-select filter-option">
+                  <option value="" disabled selected>Select an option</option>
+                </select>
+              </div>
+              <button type="button" class="remove-option-group btn btn-danger">Remove</button>
+            </div>
+          </div>
+          <button type="button" class="add-option-group btn btn-secondary">
+            Add Another Option Set
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="resetFilters">Reset</button>
+          <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section layout:fragment="pageScripts">
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      // Initialize category options map
+      const categoryOptionsMap = /*[[${categoryOptionsMap}]]*/ {};
+      /*]]>*/
+      console.log(categoryOptionsMap);
+    </script>
+    
+    <!-- Shared management functions -->
+    <script th:src="@{/js/management.js}"></script>
+    
+    <!-- Product-specific management functions -->
+    <script th:src="@{/js/product-management.js}"></script>
+    
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+    </script>
+  </section>
+</body>
+</html>
