@@ -3,6 +3,7 @@ package com.speedit.inventorysystem.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +51,34 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<OrderItem> orderItems = new ArrayList<>();
+//issue salem
+    @OneToOne(mappedBy = "parentProduct", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    private Container container; // This links a Product (if it's a container parent) to its Container definition.
+
+    // In cubic cm
+    @Column(name = "volume", precision = 10, scale = 5) // Increased scale for more precision if needed
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false) // Must be strictly positive
+    private BigDecimal volume; // Using BigDecimal for precision
+
+    // In cm
+    @Column(precision = 8, scale = 5)
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false) 
+    private BigDecimal height;
+
+    // In cm
+    @Column(precision = 8, scale = 5)
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
+    private BigDecimal width;
+
+    // In cm
+    @Column(precision = 8, scale = 5)
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
+    private BigDecimal length;
 
     public String getProductOptionsDisplay() {
         if (productOptions == null || productOptions.isEmpty()) return "";

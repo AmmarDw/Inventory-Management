@@ -2,22 +2,27 @@ package com.speedit.inventorysystem.service;
 
 import com.speedit.inventorysystem.controller.ProductController.ProductRequest;
 import com.speedit.inventorysystem.dto.ProductDTO;
+import com.speedit.inventorysystem.enums.MeasurementUnitEnum;
+import com.speedit.inventorysystem.model.Container;
 import com.speedit.inventorysystem.model.OptionCategory;
 import com.speedit.inventorysystem.model.Product;
 import com.speedit.inventorysystem.model.ProductOption;
-import com.speedit.inventorysystem.repository.InventoryStockRepository;
-import com.speedit.inventorysystem.repository.OptionCategoryRepository;
-import com.speedit.inventorysystem.repository.ProductOptionRepository;
-import com.speedit.inventorysystem.repository.ProductRepository;
+import com.speedit.inventorysystem.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,13 +35,17 @@ public class ProductService {
     @Autowired private ProductOptionRepository productOptionRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private InventoryStockRepository inventoryStockRepository;
+    @Autowired private ContainerRepository containerRepository;
 
     @Autowired private BarcodeService barcodeService;
+    @Autowired @Lazy
+    private ContainerService containerService;
 
     @Value("${barcode.prefix.country}")
     private String countryPrefix;
     @Value("${barcode.prefix.company}")
     private String companyPrefix;
+
 
     /**
      * Load categories and build DTO map: categoryId → list of {optionId, optionValue}
@@ -94,7 +103,6 @@ public class ProductService {
                 category.setCategoryName(categoryName);
                 optionCategoryRepository.save(category);
             } else {
-                newCatIndex++;
                 category = optionCategoryRepository
                         .findById(Integer.parseInt(catId)).orElse(null);
             }
@@ -116,7 +124,6 @@ public class ProductService {
                 option.setCategory(category);
                 productOptionRepository.save(option);
             } else {
-                newOptIndex++;
                 option = productOptionRepository
                         .findById(Integer.parseInt(optId)).orElse(null);
             }
@@ -133,16 +140,13 @@ public class ProductService {
                         .equals(new HashSet<>(options)));
     }
 
-    public void createProduct(Long price, List<ProductOption> finalOptions) {
-        Product product = new Product();
-        product.setPrice(price);
-        product.setProductOptions(finalOptions);
+    public Product createProduct(Product product) {
         productRepository.save(product); // Save first to get ID
 
         int checksum = calculateChecksumDigit(product.getProductId());
         product.setBarcodeChecksum(checksum);
 
-        productRepository.save(product); // Update with checksum
+        return productRepository.save(product); // Update with checksum
     }
 
     public int calculateChecksumDigit(Integer productId) {
@@ -162,8 +166,8 @@ public class ProductService {
         return (10 - (sum % 10)) % 10; // Final checksum digit
     }
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public Page<Product> getAllProducts(Pageable pageable) {
+        return productRepository.findBaseProductsWithPagination(pageable);
     }
 
     public Optional<ProductDTO> getProductDetails(Integer id, String countryPrefix, String companyPrefix) {
@@ -199,6 +203,10 @@ public class ProductService {
                     product.getPrice(),
                     optionDTOs,
                     totalStock,
+                    product.getVolume(),
+                    product.getHeight(),
+                    product.getWidth(),
+                    product.getLength(),
                     product.getCreatedAt(),
                     product.getCreatedBy(),
                     product.getUpdatedAt(),
@@ -208,6 +216,7 @@ public class ProductService {
         });
     }
 
+    @Transactional
     public ResponseEntity<?> createProductFromRequest(ProductRequest request) {
         try {
             List<ProductOption> options = buildProductOptions(
@@ -228,7 +237,23 @@ public class ProductService {
                         .body("Product with the same options already exists");
             }
 
-            createProduct(request.getPrice(), options);
+            MeasurementUnitEnum unit = MeasurementUnitEnum.valueOf(request.getDistanceUnit().toUpperCase());
+            BigDecimal factor = unit.getToBaseFactor();
+
+            BigDecimal heightInCm = request.getHeight().multiply(factor);
+            BigDecimal widthInCm = request.getWidth().multiply(factor);
+            BigDecimal lengthInCm = request.getLength().multiply(factor);
+            BigDecimal volumeInCm3 = heightInCm.multiply(widthInCm).multiply(lengthInCm);
+
+            Product product = new Product();
+            product.setPrice(request.getPrice());
+            product.setProductOptions(options);
+            product.setHeight(heightInCm);
+            product.setWidth(widthInCm);
+            product.setLength(lengthInCm);
+            product.setVolume(volumeInCm3);
+
+            createProduct(product);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -255,9 +280,21 @@ public class ProductService {
                 return ResponseEntity.badRequest().body("Error creating options");
             }
 
+            MeasurementUnitEnum unit = MeasurementUnitEnum.valueOf(request.getDistanceUnit().toUpperCase());
+            BigDecimal factor = unit.getToBaseFactor();
+
+            BigDecimal heightInCm = request.getHeight().multiply(factor);
+            BigDecimal widthInCm = request.getWidth().multiply(factor);
+            BigDecimal lengthInCm = request.getLength().multiply(factor);
+            BigDecimal volumeInCm3 = heightInCm.multiply(widthInCm).multiply(lengthInCm);
+
             Product product = existingProduct.get();
             product.setPrice(request.getPrice());
             product.setProductOptions(options);
+            product.setHeight(heightInCm);
+            product.setWidth(widthInCm);
+            product.setLength(lengthInCm);
+            product.setVolume(volumeInCm3);
             productRepository.save(product);
 
             return ResponseEntity.ok().build();
@@ -267,16 +304,67 @@ public class ProductService {
         }
     }
 
+    /**
+     * Deletes a product.
+     * If the product is a base product (child of containers), it finds and deletes
+     * the containers referencing it, triggering a chain reaction.
+     * If the product is a parent container product, it relies on JPA/database cascade.
+     *
+     * @param id The ID of the product to delete.
+     * @return ResponseEntity indicating success (200 OK) or failure (404 Not Found, 500 Internal Server Error, 409 Conflict).
+     */
     public ResponseEntity<?> deleteProduct(Integer id) {
         try {
-            if (productRepository.existsById(id)) {
-                productRepository.deleteById(id);
-                return ResponseEntity.ok().build();
+            // 1. Check if the product exists
+            if (!productRepository.existsById(id)) {
+                System.out.println("Product with ID " + id + " not found for deletion.");
+                return ResponseEntity.notFound().build(); // 404 Not Found
             }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
+
+            // 2. --- Chain Reaction Logic: Find containers where this product is the CHILD ---
+            // Find all containers where child_product_id = :id
+            List<Container> containersReferencingAsChild = containerRepository.findByChildProduct_ProductId(id);
+
+            if (!containersReferencingAsChild.isEmpty()) {
+                System.out.println("Product ID " + id + " is a child in " + containersReferencingAsChild.size() + " container(s). Initiating chain reaction deletion.");
+                // 3. For each container referencing this product as child, delete the container (and its parent product)
+                // This will trigger the JPA cascade (Container -> parentProduct) and DB cascade (parent_product_id ON DELETE CASCADE)
+                for (Container container : containersReferencingAsChild) {
+                    Integer parentProductId = container.getParentProduct().getProductId();
+                    System.out.println("Deleting container with parent product ID: " + parentProductId);
+                    // --- CRITICAL: Call ContainerService to handle potential further chain reactions ---
+                    // This ensures if the parent product is itself a child elsewhere, that chain is also handled.
+                    containerService.deleteContainer(parentProductId); // Use parent product ID
+                    // Note: containerService.deleteContainer should handle the actual deletion of the container entity
+                    // and its parent product, leveraging JPA/DB cascades for that direct relationship.
+                }
+            } else {
+                System.out.println("Product ID " + id + " is not a child product in any container.");
+            }
+
+            // 4. --- Direct Deletion ---
+            // Now, delete the product itself.
+            // If it was a parent container product, the JPA cascade (Product.container) and DB cascade (parent_product_id)
+            // should handle deleting the Container and then the parent Product.
+            // If it was a base product, it should be deleted now.
+            System.out.println("Deleting product with ID: " + id);
+            productRepository.deleteById(id);
+            System.out.println("Product with ID " + id + " deleted successfully.");
+
+            return ResponseEntity.ok().build(); // 200 OK
+
+        } catch (DataIntegrityViolationException ex) {
+            // 5. Handle database constraint violations (e.g., referenced by InventoryStock, OrderItem)
+            System.err.println("DataIntegrityViolationException deleting product ID " + id + ": " + ex.getMessage());
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Cannot delete product due to existing references (e.g., in inventory stock or orders)."));
+        } catch (Exception ex) {
+            // 6. Handle any other unexpected errors
+            System.err.println("Error deleting product with ID " + id + ": " + ex.getMessage());
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error deleting product: " + e.getMessage());
+                    .body(Map.of("error", "An unexpected error occurred while deleting the product."));
         }
     }
 

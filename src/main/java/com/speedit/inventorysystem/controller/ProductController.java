@@ -2,17 +2,23 @@ package com.speedit.inventorysystem.controller;
 
 import com.speedit.inventorysystem.dto.ProductDTO;
 import com.speedit.inventorysystem.model.*;
+import com.speedit.inventorysystem.repository.ProductRepository;
 import com.speedit.inventorysystem.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,15 +37,33 @@ public class ProductController {
     private String companyPrefix;
 
     @GetMapping("/manage")
-    public String manageProducts(Model model) {
-        // Load products with stock information
-        List<Product> products = productService.getAllProducts();
-        Map<String, Object> formData = productService.prepareAddProductData();
+    public String manageProducts(Model model,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "20") int size) {
+        try {
+            // Define default sorting (e.g., by productId)
+            Sort sort = Sort.by(Sort.Direction.ASC, "productId"); // Adjust field name if different
+            Pageable pageable = PageRequest.of(page, size, sort);
 
-        model.addAttribute("products", products);
-        model.addAttribute("categories", formData.get("categories"));
-        model.addAttribute("categoryOptionsMap", formData.get("categoryOptionsMap"));
-        System.out.println("categoryOptionsMap: " + formData.get("categoryOptionsMap"));
+            // Load PAGINATED base products
+            Page<Product> productPage = productService.getAllProducts(pageable);
+
+            Map<String, Object> formData = productService.prepareAddProductData();
+
+            // Add the page object (contains data and metadata) to the model
+            model.addAttribute("productPage", productPage);
+            // Keep formData as before
+            model.addAttribute("categories", formData.get("categories"));
+            model.addAttribute("categoryOptionsMap", formData.get("categoryOptionsMap"));
+
+        } catch (Exception e) {
+            System.err.println("Error fetching product data for management page: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("errorMessage", "Failed to load product data.");
+            // Return an error view or the page with limited data/indication
+            // For now, we'll still return the page, but it might be empty or show error
+        }
+
         return "manage-product";
     }
 
@@ -107,5 +131,9 @@ public class ProductController {
         private List<String> newCategoryNames;
         private List<String> newOptionValues;
         private Long price;
+        private String distanceUnit;
+        private BigDecimal height;
+        private BigDecimal width;
+        private BigDecimal length;
     }
 }

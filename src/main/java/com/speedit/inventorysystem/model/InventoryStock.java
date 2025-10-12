@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-// Add the @Table annotation here
 @Entity
 @Table(name = "inventory_stock") // Specify the correct table name
 @Getter
@@ -39,4 +38,9 @@ public class InventoryStock extends BaseEntity {
     @NotNull
     @PositiveOrZero
     private Integer amount;
+
+    //  any employee who at some point is responsible for this stock
+    @ManyToOne(optional = true, fetch = FetchType.LAZY) // optional = true tells JPA the relationship can be null
+    @JoinColumn(name = "employee_id", nullable = true) // nullable = true tells Hibernate to generate a nullable column
+    private User employee;
 }

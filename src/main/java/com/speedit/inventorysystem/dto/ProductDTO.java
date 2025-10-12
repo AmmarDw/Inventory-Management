@@ -2,6 +2,7 @@ package com.speedit.inventorysystem.dto;
 
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,6 +13,10 @@ public class ProductDTO {
     private final Long price;
     private final List<ProductOptionDTO> productOptions;
     private final Integer totalStock;
+    private final BigDecimal volume;
+    private final BigDecimal height;
+    private final BigDecimal width;
+    private final BigDecimal length;
     private final LocalDateTime createdAt;
     private final String createdBy;
     private final LocalDateTime updatedAt;
@@ -20,6 +25,7 @@ public class ProductDTO {
 
     public ProductDTO(Integer productId, String fullBarcode, Long price,
                       List<ProductOptionDTO> productOptions, Integer totalStock,
+                      BigDecimal volume, BigDecimal height, BigDecimal width, BigDecimal length,
                       LocalDateTime createdAt, String createdBy,
                       LocalDateTime updatedAt, String updatedBy,
                       byte[] barcodeImage) {
@@ -28,6 +34,10 @@ public class ProductDTO {
         this.price = price;
         this.productOptions = productOptions;
         this.totalStock = totalStock;
+        this.volume = volume;
+        this.height = height;
+        this.width = width;
+        this.length = length;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
         this.updatedAt = updatedAt;

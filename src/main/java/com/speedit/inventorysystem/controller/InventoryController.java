@@ -4,6 +4,7 @@ import com.speedit.inventorysystem.dto.InventoryDTO;
 import com.speedit.inventorysystem.model.Inventory;
 import com.speedit.inventorysystem.enums.InventoryTypeEnum;
 import com.speedit.inventorysystem.repository.InventoryRepository;
+import com.speedit.inventorysystem.service.InventoryService; // ✨ NEW import
 import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
@@ -21,6 +23,9 @@ public class InventoryController {
 
     @Autowired
     private InventoryRepository inventoryRepository;
+
+    @Autowired
+    private InventoryService inventoryService;
 
     @GetMapping("/manage")
     public String manageInventory(Model model) {
@@ -46,13 +51,7 @@ public class InventoryController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
-
-        Inventory inventory = new Inventory();
-        inventory.setInventoryType(InventoryTypeEnum.valueOf(request.getInventoryType()));
-        inventory.setLocation(request.getLocation());
-        inventory.setStatus(request.isStatus());
-        inventoryRepository.save(inventory);
-
+        inventoryService.createInventory(request);
         return ResponseEntity.ok().build();
     }
 
@@ -64,17 +63,7 @@ public class InventoryController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
-
-        Inventory inventory = inventoryRepository.findById(id).orElse(null);
-        if (inventory == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        inventory.setInventoryType(InventoryTypeEnum.valueOf(request.getInventoryType()));
-        inventory.setLocation(request.getLocation());
-        inventory.setStatus(request.isStatus());
-        inventoryRepository.save(inventory);
-
+        inventoryService.updateInventory(id, request);
         return ResponseEntity.ok().build();
     }
 
@@ -88,11 +77,12 @@ public class InventoryController {
         return ResponseEntity.notFound().build();
     }
 
-    // Simple request DTO
     @Data
     public static class InventoryRequest {
         private String inventoryType;
         private String location;
         private boolean status;
+        private BigDecimal capacity;
+        private String capacityUnit;
     }
 }

@@ -4,7 +4,6 @@
 // --- Store delegation function references to prevent duplicates ---
 // MOVE THESE DECLARATIONS OUTSIDE OF ANY FUNCTION OR EVENT LISTENER
 let optionGroupsDelegationFn = null;
-let filterModalOptionDelegationFn = null;
 // --- End delegation references ---
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -73,42 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Filter Modal Event Binding (Using Event Delegation) ---
     // Setup delegation for the Filter Modal *once* on page load
-    const filterModalElement = document.getElementById('filterModal');
-    if (filterModalElement) {
-        // Use a single listener on the filter modal for Add/Remove Clicks
-        // Store the function to allow potential removal/re-adding
-        filterModalOptionDelegationFn = function (e) {
-            if (e.target && e.target.classList.contains('add-option-group')) {
-                e.preventDefault();
-                addFilterOptionGroup();
-            }
-            if (e.target && e.target.classList.contains('remove-option-group')) {
-                e.preventDefault();
-                const allFilterGroups = filterModalElement.querySelectorAll('#filter-option-groups-container .option-group');
-                if (allFilterGroups.length <= 1) {
-                    alert("Cannot remove the last filter option set.");
-                    return;
-                }
-                const filterGroupToRemove = e.target.closest('.option-group');
-                if (filterGroupToRemove) {
-                    filterGroupToRemove.remove();
-                } else {
-                    console.warn("Could not find the filter option group to remove.");
-                }
-            }
-        };
-        filterModalElement.addEventListener('click', filterModalOptionDelegationFn);
-
-        // --- Delegate the 'change' event for .filter-category ---
-        filterModalElement.addEventListener('change', function (e) {
-            if (e.target && e.target.classList.contains('filter-category')) {
-                updateFilterOptionSelect(e.target);
-            }
-        });
-
-    } else {
-        console.error("Filter modal (#filterModal) not found during DOMContentLoaded setup.");
-    }
+    filterModalEventBinding();
     // --- End Filter Modal Event Binding ---
 
 
@@ -301,71 +265,6 @@ function initFilterOptionGroups() {
      }
 }
 
-function addFilterOptionGroup() {
-    const container = document.getElementById('filter-option-groups-container');
-    if (!container) {
-        console.error("Cannot add filter option group: Container (#filter-option-groups-container) not found.");
-        return;
-    }
-    const templateGroup = container.querySelector('.option-group');
-    if (!templateGroup) {
-        console.error("Cannot add filter option group: No template group found.");
-        alert("Unable to add a new filter option set. Please try reloading the page.");
-        return;
-    }
-    const newGroup = templateGroup.cloneNode(true);
-    // Reset values for the cloned filter group
-    const categorySelect = newGroup.querySelector('.filter-category');
-    const optionSelect = newGroup.querySelector('.filter-option');
-    if (categorySelect) categorySelect.value = '';
-    if (optionSelect) optionSelect.innerHTML = '<option value="" disabled selected>Select an option</option>';
-    // No need to rebind events for clicks/remove, delegation handles them.
-    // No need to rebind change listener for category, delegation handles it.
-    // Append the new group
-    container.appendChild(newGroup);
-}
-
-function updateFilterOptionSelect(categorySelect) {
-    if (!categorySelect) {
-        console.error("updateFilterOptionSelect called with invalid categorySelect");
-        return;
-    }
-
-    const categoryId = parseInt(categorySelect.value, 10);
-    const group = categorySelect.closest('.option-group');
-
-    if (!group) {
-        console.error("Could not find option-group for category select");
-        return;
-    }
-
-    const optionSelect = group.querySelector('.filter-option');
-    if (!optionSelect) {
-        console.error("Could not find filter-option select within group");
-        return;
-    }
-
-    optionSelect.innerHTML = '<option value="" disabled selected>Select an option</option>';
-
-    if (!isNaN(categoryId) && categoryId > 0) {
-        const options = categoryOptionsMap[categoryId];
-        if (options && Array.isArray(options) && options.length > 0) {
-            options.forEach(option => {
-                if (option && option.optionId !== undefined && option.optionValue) {
-                    const optElement = document.createElement('option');
-                    optElement.value = option.optionId;
-                    optElement.textContent = option.optionValue;
-                    optionSelect.appendChild(optElement);
-                } else {
-                    console.warn("Skipping invalid option ", option);
-                }
-            });
-        } else {
-            console.warn(`No options found in categoryOptionsMap for categoryId: ${categoryId}`, options);
-        }
-    }
-}
-
 // --- Data Interaction Functions ---
 
 function fetchProductDetails(productId, action) {
@@ -401,6 +300,17 @@ function populateViewModal(data) {
     document.getElementById('viewUpdatedAt').textContent = new Date(data.updatedAt).toLocaleString();
     document.getElementById('viewUpdatedBy').textContent = data.updatedBy || 'System';
 
+    // This function now just calls the shared initializer
+    initializeUnitConverter({
+        gridId: '#viewModal .detail-grid', // Note: This uses the product modal's ID
+        selectorId: 'viewProductUnitSelector',
+        volumeId: 'viewVolume',
+        heightId: 'viewHeight',
+        widthId: 'viewWidth',
+        lengthId: 'viewLength'
+    }, data); // Pass the ProductDTO data
+    
+    // Populate options list
     const optionsContainer = document.getElementById('viewOptions');
     optionsContainer.innerHTML = '';
     data.productOptions.forEach(option => {
@@ -435,6 +345,14 @@ function populateEditForm(data) {
     document.getElementById('modalTitle').textContent = 'Edit Product';
     document.getElementById('productId').value = data.productId;
     document.getElementById('modalPrice').value = data.price;
+
+    // Populate dimension fields from the DTO
+    // The backend sends dimensions in the base unit (cm), so we set the form to match.
+    document.getElementById('modalHeight').value = data.height;
+    document.getElementById('modalWidth').value = data.width;
+    document.getElementById('modalLength').value = data.length;
+    document.getElementById('modalDistanceUnit').value = 'CENTIMETER'; // Default to cm
+
     resetOptionGroups(); // Clear any extra groups, reset the first one
     const container = document.getElementById('option-groups-container');
     if (!container) return;
@@ -474,6 +392,7 @@ function populateEditForm(data) {
     });
 }
 
+// TODO add volume related fields
 function saveProduct() {
     const csrf = getCSRFToken();
     const productId = document.getElementById('productId').value;
@@ -482,6 +401,10 @@ function saveProduct() {
 
     const formData = {
         price: parseFloat(document.getElementById('modalPrice').value),
+        height: parseFloat(document.getElementById('modalHeight').value),
+        width: parseFloat(document.getElementById('modalWidth').value),
+        length: parseFloat(document.getElementById('modalLength').value),
+        distanceUnit: document.getElementById('modalDistanceUnit').value,
         categoryIds: [],
         optionIds: [],
         newCategoryNames: [],
@@ -523,6 +446,12 @@ function saveProduct() {
     }
     if (formData.optionIds.length === 0 && formData.newOptionValues.length === 0) {
         alert("Please select or add at least one product option.");
+        return;
+    }
+    if (isNaN(formData.height) || formData.height <= 0 ||
+        isNaN(formData.width) || formData.width <= 0 ||
+        isNaN(formData.length) || formData.length <= 0) {
+        alert("Please enter valid, positive numbers for all dimensions.");
         return;
     }
 

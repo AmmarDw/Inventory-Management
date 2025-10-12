@@ -10,6 +10,31 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
     <link rel="stylesheet" th:href="@{/css/management.css}">
+
+    <style>
+      .input-group {
+        display: flex;
+      }
+      .input-group input {
+        flex-grow: 1;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      .input-group select {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: 0;
+      }
+
+      #viewModal .detail-item .input-group {
+          display: flex;
+          align-items: center;
+      }
+
+      #viewModal .detail-item .input-group .detail-value {
+          margin-right: 8px; /* Add some space between the value and the dropdown */
+      }
+    </style>
   </section>
 </head>
 <body>
@@ -105,6 +130,22 @@
               <input type="text" id="modalLocation" name="location" placeholder="Enter location" required>
               <div id="locationError" class="error-message"></div>
             </div>
+
+            <div class="form-group">
+              <label for="modalCapacity">Capacity</label>
+              <div class="input-group">
+                <input type="text" id="modalCapacity" name="capacity" placeholder="Enter Capacity" required>
+                <select id="modalCapacityUnit" name="capacityUnit">
+                  <option value="METER">m³</option>
+                  <option value="CENTIMETER" selected>cm³</option> 
+                  <option value="MILLIMETER">mm³</option>
+                  <option value="INCH">in³</option>
+                  <option value="LITER">Liters</option>
+                </select>
+              </div>
+              <small class="form-text text-muted">Enter the total storage volume.</small> 
+              <div id="capacityError" class="error-message"></div> 
+            </div>
             
             <div class="form-group">
               <label for="modalStatus">Status</label>
@@ -147,6 +188,19 @@
             <div class="detail-item">
               <span class="detail-label">Status:</span>
               <span id="viewStatus" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Capacity:</span>
+              <div class="input-group">
+                  <span id="viewCapacityValue" class="detail-value"></span>
+                  <select id="viewCapacityUnit">
+                      <option value="METER">m³</option>
+                      <option value="CENTIMETER">cm³</option>
+                      <option value="MILLIMETER">mm³</option>
+                      <option value="INCH">in³</option>
+                      <option value="LITER">Liters</option>
+                  </select>
+              </div>
             </div>
             <div class="detail-item">
               <span class="detail-label">Created At:</span>

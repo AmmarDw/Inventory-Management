@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Container Management ‑ SpeedIt</title>
+
+  <section layout:fragment="pageStyles">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link rel="stylesheet" th:href="@{/css/management.css}">
+    <!-- Add Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css  ">
+    <!-- Lucide Icons are already included in layout -->
+    <style>
+      /* Specific styles for Container Management */
+      .container-hierarchy {
+          display: flex;
+          flex-direction: column;
+          gap: 5px; /* Space between levels */
+      }
+
+      .container-level, .product-options-display {
+          padding: 5px 10px;
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 5px; /* Space between icon and text */
+      }
+
+      .container-level:hover, .product-options-display:hover {
+          background-color: #f0f4f8;
+      }
+
+      .product-options-display {
+        /* Inherit hover styles, but might need specific styling if different */
+      }
+
+       .corner-right-down-icon {
+           width: 16px;
+           height: 16px;
+           flex-shrink: 0; /* Prevent icon from shrinking */
+       }
+
+       /* Example Styling for Table Rows - Might be handled by management.css */
+       /* .management-table tbody tr:hover {
+           background-color: #f9f9f9;
+       } */
+    </style>
+  </section>
+</head>
+<body>
+  <section layout:fragment="content">
+    <div class="management-container">
+      <div class="management-header">
+        <h1>Container Management</h1>
+        <button class="btn btn-primary btn-with-icon" id="createContainerBtn">
+          <i class="icon" data-lucide="plus"></i>
+          <span>Create New Container</span>
+        </button>
+      </div>
+
+      <div class="management-tools">
+        <!-- Search might be adapted later if needed -->
+        <!-- <div class="search-container">
+          <input type="text" id="containerSearch" placeholder="Search containers...">
+          <i class="search-icon" data-lucide="search"></i>
+        </div> -->
+        <button class="btn btn-secondary btn-with-icon" id="filterBtn">
+          <i class="icon" width="20" height="20" data-lucide="filter"></i>
+          <span>Filters</span>
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="management-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Container Hierarchy</th>
+              <th>Price</th> <!-- Price of the Parent Product -->
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows will be populated by container-management.js -->
+            <!-- Example rows removed, as they are now dynamic -->
+          </tbody>
+        </table>
+
+         <!-- Pagination Controls -->
+         <div class="pagination-container">
+             <button class="btn btn-secondary" id="prevPageBtn">Previous</button>
+             <button class="btn btn-secondary" id="nextPageBtn">Next</button>
+             <!-- You can add page numbers, total pages, etc. here if needed -->
+         </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Create/Update Container Modal -->
+    <div class="modal" id="containerFormModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="containerModalTitle">Create New Container</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="containerForm">
+            <!-- Hidden field for Container ID if needed for future edit (not used for create) -->
+            <!-- <input type="hidden" id="containerId" name="containerId"> -->
+
+            <!-- Parent Product Price -->
+            <div class="form-group">
+              <label for="parentProductPrice">Container Product Price</label>
+              <input type="number" id="parentProductPrice" name="parentProductPrice" min="0" step="0.01" required>
+              <div id="parentProductPriceError" class="error-message"></div>
+            </div>
+
+            <!-- Child Product (Searchable Dropdown) -->
+            <div class="form-group">
+              <label for="childProductId">Child Product</label>
+              <div class="select-with-filter">
+                <select id="childProductId" name="childProductId" class="child-product-select" required>
+                  <option value="" disabled selected>Select a child product or container</option>
+                  <!-- Options will be populated dynamically by Choices.js based on backend data -->
+                </select>
+              </div>
+              <div id="childProductIdError" class="error-message"></div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label for="quantity">Quantity</label>
+              <input type="number" id="quantity" name="quantity" min="1" required>
+              <div id="quantityError" class="error-message"></div>
+            </div>
+
+            <!-- Unit (Dropdown) -->
+            <div class="form-group">
+              <label for="unit">Unit</label>
+              <select id="unit" name="unit" required>
+                <option value="" disabled selected>Select a unit</option>
+                <option value="PACK">Pack</option>
+                <option value="BOX">Box</option>
+                <option value="CASE">Case</option>
+                <option value="PALLET">Pallet</option>
+                <!-- Add other UnitType enum values as needed -->
+              </select>
+              <div id="unitError" class="error-message"></div>
+            </div>
+
+            <div class="form-section">
+                <h4>Container Dimensions</h4>
+                <div class="form-group">
+                    <label>Dimensions (H x W x L)</label>
+                    <div class="input-group">
+                        <input type="number" id="containerHeight" name="height" min="0" step="any" placeholder="Height" required>
+                        <input type="number" id="containerWidth" name="width" min="0" step="any" placeholder="Width" required>
+                        <input type="number" id="containerLength" name="length" min="0" step="any" placeholder="Length" required>
+                        <select id="containerDistanceUnit" name="distanceUnit" required>
+                            <option value="CENTIMETER" selected>cm</option>
+                            <option value="METER">m</option>
+                            <option value="MILLIMETER">mm</option>
+                            <option value="INCH">in</option>
+                        </select>
+                    </div>
+                    <div id="dimensionsError" class="error-message"></div>
+                </div>
+            </div>
+
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveContainerBtn">Save Container</button>
+        </div>
+      </div>
+    </div>
+    <!-- End Create Container Modal -->
+
+    <!-- View Modal -->
+    <div class="modal" id="viewContainerModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Container Details</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <!-- Basic IDs -->
+            <div class="detail-item">
+              <span class="detail-label">Container ID:</span>
+              <span id="viewContainerId" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Parent Product ID:</span>
+              <span id="viewParentProductId" class="detail-value"></span>
+            </div>
+
+            <!-- Hierarchy -->
+            <div class="detail-item">
+              <span class="detail-label">Hierarchy:</span>
+              <div id="viewHierarchy" class="detail-value">
+                <!-- Hierarchy will be built dynamically here -->
+              </div>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Display Unit:</span>
+                <select id="viewContainerUnitSelector" class="detail-value">
+                    <option value="CENTIMETER">cm</option>
+                    <option value="METER">m</option>
+                    <option value="MILLIMETER">mm</option>
+                    <option value="INCH">in</option>
+                </select>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Volume:</span>
+                <span id="viewContainerVolume" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Height:</span>
+                <span id="viewContainerHeight" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Width:</span>
+                <span id="viewContainerWidth" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Length:</span>
+                <span id="viewContainerLength" class="detail-value"></span>
+            </div>
+
+            <!-- Price -->
+            <div class="detail-item">
+              <span class="detail-label">Price:</span>
+              <span id="viewPrice" class="detail-value"></span>
+            </div>
+
+            <!-- Total Stock -->
+            <div class="detail-item">
+              <span class="detail-label">Total Stock:</span>
+              <span id="viewStock" class="detail-value"></span>
+            </div>
+
+            <!-- Barcode -->
+            <div class="detail-item">
+              <span class="detail-label">Barcode:</span>
+              <div class="detail-value">
+                  <div id="viewBarcodeText"></div>
+                  <img id="viewBarcodeImage" alt="Barcode" style="max-width: 100%;">
+              </div>
+            </div>
+
+            <!-- Audit Fields -->
+            <div class="detail-item">
+              <span class="detail-label">Created At:</span>
+              <span id="viewCreatedAt" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created By:</span>
+              <span id="viewCreatedBy" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Updated At:</span>
+              <span id="viewUpdatedAt" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Updated By:</span>
+              <span id="viewUpdatedBy" class="detail-value"></span>
+            </div>
+          </div>
+
+          <!-- Action Links (similar to product view) -->
+          <div class="detail-item actions-container">
+            <a id="viewInventoryStockLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+              <i data-lucide="package"></i>
+              <span>View Inventory Stock</span>
+            </a>
+
+            <a id="viewOrdersLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+              <i data-lucide="shopping-cart"></i>
+              <span>View Orders</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End View Modal -->
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteContainerModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Confirm Deletion</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Confirmation message will go here -->
+          <p>Are you sure you want to delete this container?</p>
+        </div>
+        <div class="modal-footer">
+          <!-- Action buttons will go here -->
+          <button class="btn btn-secondary close-modal">Cancel</button>
+          <button id="confirmDeleteContainer" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal" id="filterModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Filter Containers</h2>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Filter options for containers will go here -->
+          <div class="form-group">
+            <label for="filterMinQuantity">Min Quantity</label>
+            <input type="number" id="filterMinQuantity" name="filterMinQuantity" min="0">
+          </div>
+          <div class="form-group">
+            <label for="filterMaxQuantity">Max Quantity</label>
+            <input type="number" id="filterMaxQuantity" name="filterMaxQuantity" min="0">
+          </div>
+          <div class="form-group">
+            <label for="filterUnit">Unit</label>
+            <select id="filterUnit" name="filterUnit">
+              <option value="">Any Unit</option>
+              <option value="PACK">Pack</option>
+              <option value="BOX">Box</option>
+              <option value="CASE">Case</option>
+              <option value="PALLET">Pallet</option>
+              <!-- Add other UnitType enum values as needed -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="filterMinVolume">Min Volume</label>
+            <input type="number" id="filterMinVolume" name="filterMinVolume" min="0" step="0.0001">
+          </div>
+          <div class="form-group">
+            <label for="filterMaxVolume">Max Volume</label>
+            <input type="number" id="filterMaxVolume" name="filterMaxVolume" min="0" step="0.0001">
+          </div>
+
+          <hr>
+
+          <!-- Price and Stock Filters (similar to product) -->
+          <div class="form-group">
+            <label for="filterPriceMin">Min Price</label>
+            <input type="number" id="filterPriceMin" min="0" step="0.01" placeholder="Min price">
+          </div>
+          <div class="form-group">
+            <label for="filterPriceMax">Max Price</label>
+            <input type="number" id="filterPriceMax" min="0" step="0.01" placeholder="Max price">
+          </div>
+          <div class="form-group">
+            <label for="filterStockMin">Min Stock</label>
+            <input type="number" id="filterStockMin" min="0" placeholder="Min stock">
+          </div>
+          <hr> <!-- Separator for clarity -->
+
+          <!-- Option Filters (similar to product) -->
+          <div id="filter-option-groups-container">
+            <div class="option-group">
+              <div class="form-group">
+                <label>Option Category</label>
+                <select class="category-select filter-category">
+                  <option value="" disabled selected>Select a category</option>
+                  <option th:each="cat : ${categories}" th:value="${cat.optionCategoryId}" th:text="${cat.categoryName}"></option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Option</label>
+                <select class="option-select filter-option">
+                  <option value="" disabled selected>Select an option</option>
+                  <!-- Options will be populated dynamically by JS using injected categoryOptionsMap -->
+                </select>
+              </div>
+              <button type="button" class="remove-option-group btn btn-danger">Remove</button>
+            </div>
+          </div>
+          <button type="button" class="add-option-group btn btn-secondary">
+            Add Another Option Set
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="resetContainerFilters">Reset</button>
+          <button class="btn btn-primary" id="applyContainerFilters">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+    <!-- End Filter Modal -->
+  </section>
+
+  <section layout:fragment="pageScripts">
+    <!-- Add Choices.js JS BEFORE your container-management.js -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js  "></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css  ">
+
+    <!-- Include JsBarcode for barcode generation -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js  "></script>
+
+    <!-- Inject the unified containerData structure from the backend -->
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      // This variable is used by container-management.js
+      // It contains containersPage, containersMap, hasNext, hasPrevious
+      const containerData = /*[[${containerData}]]*/ {};
+
+      // Inject formData if needed by future modals (e.g., for category/option selects)
+      // This assumes ProductService.prepareAddProductData provides these
+      const categoryOptionsMap = /*[[${categoryOptionsMap}]]*/ {};
+      /*]]>*/
+    </script>
+
+    <!-- Shared management functions -->
+    <script th:src="@{/js/management.js}"></script>
+
+    <!-- Shared functionality for goods management -->
+    <script th:src="@{/js/goods-management.js}"></script>
+
+    <!-- Container-specific management functions -->
+    <script th:src="@{/js/container-management.js}"></script>
+
+    <script>
+      // Initialize Lucide icons. Important for icons rendered by JS.
+      document.addEventListener('DOMContentLoaded', function () {
+          lucide.createIcons();
+      });
+    </script>
+  </section>
+</body>
+</html>

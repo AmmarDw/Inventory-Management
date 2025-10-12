@@ -34,9 +34,9 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatusEnum orderStatus;
 
-    /** who delivers */
-    @ManyToOne @JoinColumn(name = "vendor_id", nullable = false)
-    private User vendor;
+    // The employee who is in charge of the order
+    @ManyToOne @JoinColumn(name = "supervisor_id", nullable = false)
+    private User supervisor;
 
     /** who placed the order */
     @ManyToOne @JoinColumn(name = "client_id", nullable = false)
