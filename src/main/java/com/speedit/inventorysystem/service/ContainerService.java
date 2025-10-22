@@ -906,4 +906,53 @@ public class ContainerService {
         productToUpdate.setLength(lengthInCm);
         productToUpdate.setVolume(volumeInCm3); // Update the calculated volume
     }
+
+    /**
+     * Builds a concise, human-readable information string for any product.
+     * - If the product is a base product, it returns its options (e.g., "Break, Chocolate, 250g").
+     * - If the product is a container, it recursively builds the hierarchy string
+     * (e.g., "BOX contains 20 -> PACK contains 10 -> Break, Chocolate, 250g").
+     *
+     * @param product The Product entity to describe.
+     * @return A descriptive string for the product.
+     */
+    public String buildProductInfoString(Product product) {
+        if (product == null) {
+            return "N/A";
+        }
+
+        // Check if the product is a parent of a container
+        Container container = product.getContainer();
+
+        if (container == null) {
+            // This is a base product, so just return its options.
+            return product.getProductOptionsDisplay();
+        } else {
+            // This is a container, so build the hierarchy string.
+            StringBuilder infoBuilder = new StringBuilder();
+            Container currentContainer = container;
+
+            while (currentContainer != null) {
+                infoBuilder.append(currentContainer.getUnit().toString())
+                        .append(" contains ")
+                        .append(currentContainer.getQuantity());
+
+                Product childProduct = currentContainer.getChildProduct();
+                Container nextContainer = childProduct.getContainer(); // Check if the child is also a container
+
+                if (nextContainer != null) {
+                    infoBuilder.append(" -> ");
+                    currentContainer = nextContainer;
+                } else {
+                    // Reached the final base product at the end of the chain
+                    String finalOptions = childProduct.getProductOptionsDisplay();
+                    if (!finalOptions.isEmpty()) {
+                        infoBuilder.append(" -> ").append(finalOptions);
+                    }
+                    currentContainer = null; // End the loop
+                }
+            }
+            return infoBuilder.toString();
+        }
+    }
 }

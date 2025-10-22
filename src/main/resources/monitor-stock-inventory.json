@@ -1,0 +1,235 @@
+{
+  "products": [
+    {
+      "productId": "10",
+      "productInfo": "Break, Chocolate, 250g",
+      "price": 1.5
+    },
+    {
+      "productId": "11",
+      "productInfo": "Break, Vanilla, 500g",
+      "price": 2.5
+    },
+        {
+      "productId": "12",
+      "productInfo": "Pack contains 10 -> Break, Chocolate, 250g",
+      "price": 14.5
+    },
+    {
+      "productId": "13",
+      "productInfo": "Box contains 20 -> Pack contains 10 -> Break, Chocolate, 250g",
+      "price": 280
+    },
+        {
+      "productId": "14",
+      "productInfo": "Break, Cola, 330ml Can",
+      "price": 2.5
+    },
+    {
+      "productId": "15",
+      "productInfo": "Pack contains 6 -> Break, Cola, 330ml Can",
+      "price": 14
+    }
+  ],
+
+  "inventory-stocks": [
+    {
+      "inventoryStockId": "701",
+      "inventoryId": "401",
+      "productId": "10",
+      "orderItemId": null,
+      "amount": 500,
+      "employeeId": null
+    },
+    {
+      "inventoryStockId": "702",
+      "inventoryId": "401",
+      "productId": "11",
+      "orderItemId": null,
+      "amount": 100,
+      "employeeId": null
+    },
+    {
+      "inventoryStockId": "703",
+      "inventoryId": "401",
+      "productId": "13",
+      "orderItemId": null,
+      "amount": 50,
+      "employeeId": null
+    },
+    {
+      "inventoryStockId": "704",
+      "inventoryId": "401",
+      "productId": "11",
+      "orderItemId": "601",
+      "amount": 14,
+      "employeeId": "2"
+    },
+    {
+      "inventoryStockId": "705",
+      "inventoryId": "401",
+      "productId": "13",
+      "orderItemId": "602",
+      "amount": 5,
+      "employeeId": "2"
+    },
+    {
+      "inventoryStockId": "706",
+      "inventoryId": "401",
+      "productId": "10",
+      "orderItemId": "603",
+      "amount": 20,
+      "employeeId": null
+    },
+    {
+      "inventoryStockId": "707",
+      "inventoryId": "401",
+      "productId": "14",
+      "orderItemId": null,
+      "amount": 1000,
+      "employeeId": "3"
+    },
+    {
+      "inventoryStockId": "708",
+      "inventoryId": "401",
+      "productId": "15",
+      "orderItemId": null,
+      "amount": 100,
+      "employeeId": null
+    },
+    {
+      "inventoryStockId": "709",
+      "inventoryId": "401",
+      "productId": "12",
+      "orderItemId": null,
+      "amount": 200,
+      "employeeId": "3"
+    },
+    {
+      "inventoryStockId": "710",
+      "inventoryId": "401",
+      "productId": "12",
+      "orderItemId": "604",
+      "amount": 8,
+      "employeeId": "2"
+    },
+    {
+      "inventoryStockId": "711",
+      "inventoryId": "401",
+      "productId": "15",
+      "orderItemId": "605",
+      "amount": 2,
+      "employeeId": "2"
+    },
+    {
+      "inventoryStockId": "712",
+      "inventoryId": "401",
+      "productId": "14",
+      "orderItemId": "606",
+      "amount": 35,
+      "employeeId": "3"
+    }
+  ],
+
+  "users": [
+    {
+      "userId": "1",
+      "name": "Adam Admin"
+    },
+    {
+      "userId": "2",
+      "name": "Vince Staff"
+    },
+    {
+      "userId": "3",
+      "name": "Wendy Staff"
+    },
+        {
+      "userId": "4",
+      "name": "Carla Client"
+    },
+    {
+      "userId": "5",
+      "name": "Sam Shopper"
+    },
+    {
+      "userId": "6",
+      "name": "Mike Vendor"
+    }
+  ],
+
+  "orders": [
+    {
+      "orderId": "501",
+      "status": "ALLOCATED",
+      "clientId": "4",
+      "supervisorId": "2",
+      "deliveryLocation": "Hail, An Naqra District",
+      "totalOrderItems": 3,
+      "totalOrderItemsQuantities": 80
+    },
+    {
+      "orderId": "502",
+      "status": "PLACED",
+      "clientId": "5",
+      "supervisorId": "3",
+      "deliveryLocation": "Riyadh, Al Olaya District",
+      "totalOrderItems": 2,
+      "totalOrderItemsQuantities": 12
+    },
+    {
+      "orderId": "503",
+      "status": "FULFILLED",
+      "clientId": "4",
+      "supervisorId": "2",
+      "deliveryLocation": "Hail, An Naqra District",
+      "totalOrderItems": 1,
+      "totalOrderItemsQuantities": 50
+    }
+  ],
+
+  "order-items": [
+    {
+      "orderItemId": "601",
+      "orderId": "501",
+      "productId": "11",
+      "quantity": 40,
+      "discount": 0
+    },
+    {
+      "orderItemId": "602",
+      "orderId": "501",
+      "productId": "13",
+      "quantity": 10,
+      "discount": 0
+    },
+    {
+      "orderItemId": "603",
+      "orderId": "501",
+      "productId": "10",
+      "quantity": 30,
+      "discount": 0
+    },
+    {
+      "orderItemId": "604",
+      "orderId": "502",
+      "productId": "12",
+      "quantity": 10,
+      "discount": 0
+    },
+    {
+      "orderItemId": "605",
+      "orderId": "502",
+      "productId": "15",
+      "quantity": 2,
+      "discount": 0
+    },
+    {
+      "orderItemId": "606",
+      "orderId": "503",
+      "productId": "14",
+      "quantity": 50,
+      "discount": 0
+    }
+  ]
+}

@@ -392,7 +392,6 @@ function populateEditForm(data) {
     });
 }
 
-// TODO add volume related fields
 function saveProduct() {
     const csrf = getCSRFToken();
     const productId = document.getElementById('productId').value;

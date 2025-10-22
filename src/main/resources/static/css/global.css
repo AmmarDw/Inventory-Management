@@ -61,3 +61,10 @@ button {
   font-size: 14px;
   margin: 0.5rem 0;
 }
+
+.corner-right-down-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0; /* Prevent icon from shrinking */
+    transform: translateY(7px);
+}

@@ -57,25 +57,25 @@ public class Product extends BaseEntity {
     private Container container; // This links a Product (if it's a container parent) to its Container definition.
 
     // In cubic cm
-    @Column(name = "volume", precision = 10, scale = 5) // Increased scale for more precision if needed
+    @Column(name = "volume", precision = 15, scale = 5) // Increased scale for more precision if needed
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false) // Must be strictly positive
     private BigDecimal volume; // Using BigDecimal for precision
 
     // In cm
-    @Column(precision = 8, scale = 5)
+    @Column(precision = 13, scale = 5)
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false) 
     private BigDecimal height;
 
     // In cm
-    @Column(precision = 8, scale = 5)
+    @Column(precision = 13, scale = 5)
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal width;
 
     // In cm
-    @Column(precision = 8, scale = 5)
+    @Column(precision = 13, scale = 5)
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal length;

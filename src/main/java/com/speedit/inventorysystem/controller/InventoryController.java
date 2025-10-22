@@ -38,8 +38,14 @@ public class InventoryController {
     @GetMapping("/{id}/details")
     @ResponseBody
     public ResponseEntity<InventoryDTO> getInventoryDetails(@PathVariable Integer id) {
-        return inventoryRepository.findById(id)
-                .map(InventoryDTO::new)
+        return inventoryRepository.findById(id).map(inventory -> {
+                    // ✨ NEW: Calculate total volume of all stock in this inventory
+                    BigDecimal totalVolume = inventory.getInventoryStocks().stream()
+                            .map(stock -> stock.getProduct().getVolume().multiply(new BigDecimal(stock.getAmount())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    return new InventoryDTO(inventory, totalVolume);
+                })
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

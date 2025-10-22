@@ -1,0 +1,155 @@
+.monitor-container {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+    /* CRITICAL (Step 1): Set a fixed height for the entire page, minus your top navbar.
+       Adjust '60px' to the actual height of your navigation bar. */
+    height: calc(100vh - 60px); 
+}
+
+.level-1-panel {
+    flex-shrink: 0;
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.main-content-area {
+    display: flex;
+    gap: 1rem;
+    /* CRITICAL (Step 2): This container grows to fill the remaining vertical space
+       and hides its own overflow. This gives its children (the panels) a
+       fixed height boundary to scroll within. */
+    flex-grow: 1;
+    overflow: hidden; 
+}
+
+.level-2-panel, .level-3-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    /* CRITICAL (Step 3): This adds a vertical scrollbar ONLY when the content
+       inside is taller than the panel itself. */
+    overflow-y: auto; 
+}
+
+/* --- Styling for Level 2 Panel --- */
+.level-2-panel {
+    flex-basis: 47%;
+    padding: 0.5rem; /* Reduced padding to let rows manage their own space */
+    background-color: #f0f4f8; /* Lighter background for the container */
+    overflow-y: auto;
+}
+
+.level-2-row {
+    background-color: #ffffff;
+    border-radius: 6px;
+    margin: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    border: 1px solid #e9ecef;
+}
+
+.level-2-row:hover {
+    background-color: #e9ecef; /* Darken on hover */
+    transform: translateY(-2px);
+}
+
+.level-2-row.active-row {
+    background-color: #dcdfe3 !important; /* Darken significantly on active */
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.level-3-panel {
+    flex-basis: 53%;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+/* --- Styling for Level 3 Info --- */
+.level-3-group {
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.level-3-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem; /* Space between header items */
+    font-size: 1.04rem;
+    color: var(--text-color);
+    position: relative; /* For tooltip */
+}
+.level-3-header.available-header {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #1a682b;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.level-3-header .tooltip-text { /* Simple tooltip styling */
+    visibility: hidden;
+    /* ... add more tooltip styles if needed */
+}
+.level-3-header:hover .tooltip-text {
+    visibility: visible;
+}
+
+/* Helper class for truncated text with tooltip */
+.truncated-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px; /* Adjust as needed */
+    display: inline-block;
+    vertical-align: middle;
+    cursor: help; /* Indicate that it's hoverable */
+    position: relative;
+}
+
+.management-table table{
+    width: 100%;
+    border-collapse: collapse;
+}
+.management-table tr {
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+}
+.management-table th, .management-table td {
+    padding: 0.5rem .75rem;
+}
+.management-table th {
+    color: #464646;
+}
+
+/* Simple Tooltip using title attribute */
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 0;
+    top: 100%;
+    margin-top: 5px;
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    z-index: 10;
+    white-space: pre-wrap; /* Allows line breaks in the tooltip */
+    font-size: 0.85rem;
+
+    /* CRITICAL PROPERTY: This tells the browser to respect the '&#10;' line breaks */
+    white-space: pre-wrap;
+}
+/* This targets any element with a tooltip. */
+[data-tooltip] {
+    position: relative; /* This makes the element the anchor for its tooltip */
+}

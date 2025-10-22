@@ -15,22 +15,25 @@ public class InventoryDTO {
     private String location;
     private boolean status;
     private BigDecimal capacity;
+    private BigDecimal totalVolume;
     private LocalDateTime createdAt;
     private String createdBy;
     private LocalDateTime updatedAt;
     private String updatedBy;
 
     // Constructor from Inventory entity
-    public InventoryDTO(Inventory inventory) {
+    public InventoryDTO(Inventory inventory, BigDecimal totalVolume) {
         this.inventoryId = inventory.getInventoryId();
         this.inventoryType = inventory.getInventoryType().name();  // Store enum name
         this.inventoryTypeDisplay = inventory.getInventoryType().getDisplayName();  // Store display name
         this.location = inventory.getLocation();
         this.status = inventory.isStatus();
         this.capacity = inventory.getCapacity();
+        this.totalVolume = totalVolume;
         this.createdAt = inventory.getCreatedAt();
         this.createdBy = inventory.getCreatedBy();
         this.updatedAt = inventory.getUpdatedAt();
         this.updatedBy = inventory.getUpdatedBy();
     }
+
 }

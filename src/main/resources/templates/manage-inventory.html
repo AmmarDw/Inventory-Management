@@ -10,6 +10,7 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
     <link rel="stylesheet" th:href="@{/css/management.css}">
+    <link rel="stylesheet" th:href="@{/css/progress-bar.css}">
 
     <style>
       .input-group {
@@ -195,12 +196,18 @@
                   <span id="viewCapacityValue" class="detail-value"></span>
                   <select id="viewCapacityUnit">
                       <option value="METER">m³</option>
+                      <option value="LITER">Liters</option>
                       <option value="CENTIMETER">cm³</option>
                       <option value="MILLIMETER">mm³</option>
                       <option value="INCH">in³</option>
-                      <option value="LITER">Liters</option>
                   </select>
               </div>
+            </div>
+            <div class="detail-item" style="grid-column: 1 / -1;"> 
+                <div class="progress-bar-container">
+                    <span class="progress-bar-label">Fill Level:</span>
+                    <div id="viewFillLevel" class="detail-value" style="width: 100%;"></div>
+                </div>
             </div>
             <div class="detail-item">
               <span class="detail-label">Created At:</span>
@@ -220,9 +227,14 @@
             </div>
           </div>
           <div class="detail-item">
-            <a id="stockLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+            <a id="stockByProduct" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
               <i data-lucide="package"></i> 
-              <span>View Inventory Stock</span>
+              <span>View Inventory Stock by Products</span>
+            </a>
+
+            <a id="stockByOrder" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
+              <i data-lucide="shopping-cart"></i> 
+              <span>View Inventory Stock by Orders</span>
             </a>
           </div>
         </div>
@@ -284,9 +296,15 @@
   <section layout:fragment="pageScripts"> 
     <!-- Shared management functions -->
     <script th:src="@{/js/management.js}"></script>
+    
+    <!-- Volume converter script -->
+    <script th:src="@{/js/volume-converter.js}"></script>
        
     <!-- Custom script for inventory management -->
     <script th:src="@{/js/inventory-management.js}"></script>
+
+    <!-- Progress bar script -->
+    <script th:src="@{/js/progress-bar.js}"></script>
     
     <script>
       // Initialize Lucide icons

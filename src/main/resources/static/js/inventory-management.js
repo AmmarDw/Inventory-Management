@@ -1,18 +1,6 @@
 // inventory-management.js - Inventory management functionality
 // Relies on management.js for shared modal/CSRF logic
 
-// Conversion factors from our base unit (cm³) to other units.
-// This mirrors the logic from the Java Enum.
-const CONVERSION_FACTORS_FROM_CM3 = {
-    // To get the target unit, multiply the cm³ value by the factor
-    CENTIMETER: 1,
-    LITER:      1 / 1000,
-    METER:      1 / 1000000,
-    MILLIMETER: 1000,
-    INCH:       1 / (2.54 * 2.54 * 2.54)
-};
-
-
 document.addEventListener('DOMContentLoaded', function() {
   // Specific modals for inventory
   const inventoryFormModal = registerModal('inventoryFormModal'); // Register with shared logic
@@ -147,23 +135,26 @@ function populateViewModal(data) {
   document.getElementById('viewLocation').textContent = data.location;
   document.getElementById('viewStatus').textContent = data.status ? 'Active' : 'Inactive';
   
-  // ✨ NEW logic for capacity display
-  const capacityValueSpan = document.getElementById('viewCapacityValue');
-  const capacityUnitSelect = document.getElementById('viewCapacityUnit');
-
-  // Store the raw cm³ value in a data attribute for later conversions
-  capacityValueSpan.dataset.baseCapacity = data.capacity;
-
-  // Set a user-friendly default view (e.g., cubic meters) and update the display
-  capacityUnitSelect.value = 'METER'; // Default to m³
-  updateDisplayedCapacity(); // Call the new function to calculate and show the initial value
+  // ✨ CHANGED: Call the shared volume converter from volume-converter.js
+  initializeVolumeConverter({
+    unitSelectorId: 'viewCapacityUnit',
+    valueElements: [
+        { valueSpanId: 'viewCapacityValue', baseValueCm3: data.capacity, defaultUnit: 'METER' }
+    ]
+  });
   
+  // Call the progress bar function with raw data
+  const fillLevelContainer = document.getElementById('viewFillLevel');
+  createProgressBar(fillLevelContainer, data.totalVolume, data.capacity);
+
   document.getElementById('viewCreatedAt').textContent = new Date(data.createdAt).toLocaleString();
   document.getElementById('viewCreatedBy').textContent = data.createdBy || 'System';
   document.getElementById('viewUpdatedAt').textContent = new Date(data.updatedAt).toLocaleString();
   document.getElementById('viewUpdatedBy').textContent = data.updatedBy || 'System';
-  const stockLink = document.getElementById('stockLink');
-  stockLink.href = `/inventory-stock/manage?inventoryId=${data.inventoryId}`;
+  const stockByProduct = document.getElementById('stockByProduct');
+  stockByProduct.href = `/monitor-stock/inventory/${data.inventoryId}?viewBy=product`;
+  const stockByOrder = document.getElementById('stockByOrder');
+  stockByOrder.href = `/monitor-stock/inventory/${data.inventoryId}?viewBy=order`;
 }
 
 
@@ -236,30 +227,6 @@ function deleteInventory(inventoryId) {
       }
     })
     .catch(error => console.error('Error deleting inventory:', error));
-}
-
-
-// A reusable function to update the displayed capacity
-function updateDisplayedCapacity() {
-    const valueSpan = document.getElementById('viewCapacityValue');
-    const unitSelect = document.getElementById('viewCapacityUnit');
-    
-    // Retrieve the base capacity stored in the data attribute
-    const baseCapacityCm3 = parseFloat(valueSpan.dataset.baseCapacity);
-    if (isNaN(baseCapacityCm3)) return;
-
-    const targetUnit = unitSelect.value;
-    const factor = CONVERSION_FACTORS_FROM_CM3[targetUnit];
-
-    if (factor) {
-        const convertedValue = baseCapacityCm3 * factor;
-        // Format to a reasonable number of decimal places
-        const displayValue = convertedValue.toLocaleString(undefined, { 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 6 
-        });
-        valueSpan.textContent = displayValue;
-    }
 }
 
 // Note: displayFormErrors is now in management.js and requires a mapping object

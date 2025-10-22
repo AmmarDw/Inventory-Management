@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{stock-monitoring-layout}">
+
+<head>
+    <title th:text="|Stock for Inventory #${pageData.inventory.inventoryId}|"></title>
+    <th:block layout:fragment="customStyles">
+        <link rel="stylesheet" th:href="@{/css/circular-progress.css}">
+    </th:block>
+</head>
+<body>
+    <h1 layout:fragment="monitor-title" th:text="|Monitor Inventory #${pageData.inventory.inventoryId} Stock|"></h1>
+
+    <div layout:fragment="level1Content" style="display: flex; justify-content: space-around; align-items: flex-start;">
+        <div id="fillLevelContainer"></div>
+        <div>
+            <p><strong>Total Capacity:</strong> <span id="monitorCapacityValue"></span></p>
+            <p><strong>Filled Volume:</strong> <span id="monitorFilledVolumeValue"></span></p>
+            <select id="monitorUnitSelector">
+                <option value="METER">m³</option>
+                <option value="LITER">Liters</option>
+                <option value="CENTIMETER">cm³</option>
+                <option value="MILLIMETER">mm³</option>
+                <option value="INCH">in³</option>
+            </select>
+        </div>
+        <div>
+            <p><strong>Type:</strong> <span th:text="${pageData.inventory.inventoryType.displayName}"></span></p>
+            <p><strong>Location:</strong> <span th:text="${pageData.inventory.location}"></span></p>
+            <p><strong>Status:</strong> <span th:text="${pageData.inventory.status ? 'Active' : 'Inactive'}"></span></p>
+        </div>
+        <div>
+            <p><strong>Created:</strong> <span th:text="${#temporals.format(pageData.inventory.createdAt, 'yyyy-MM-dd HH:mm')}"></span> by <span th:text="${pageData.inventory.createdBy}"></span></p>
+            <p><strong>Updated:</strong> <span th:text="${#temporals.format(pageData.inventory.updatedAt, 'yyyy-MM-dd HH:mm')}"></span> by <span th:text="${pageData.inventory.updatedBy}"></span></p>
+        </div>
+        <div style="margin-block-start: 1em; margin-block-end: 1em;">
+            <strong>View By:</strong>
+            <label><input type="radio" name="viewBy" value="product" th:checked="${viewBy == 'product'}"> Product</label>
+            <label><input type="radio" name="viewBy" value="order" th:checked="${viewBy == 'order'}"> Order</label>
+        </div>
+    </div>
+
+    <div layout:fragment="level2Content" id="level-2-container">
+        </div>
+
+    <div layout:fragment="level3Content" id="level-3-container">
+        </div>
+    
+    <th:block layout:fragment="customScripts">
+        <script th:src="@{/js/circular-progress.js}"></script>
+
+        <script th:src="@{/js/volume-converter.js}"></script>
+
+        <script th:inline="javascript">
+            // Inject data for JavaScript
+            const stockDataJson = /*[[${jsonData}]]*/ '{}';
+            const initialViewBy = /*[[${viewBy}]]*/ 'product';
+            const pageDataForJs = {
+                inventoryCapacity: /*[[${pageData.inventory.capacity}]]*/ 0,
+                totalVolumeInStock: /*[[${pageData.totalVolumeInStock}]]*/ 0,
+                fillLevelPercentage: /*[[${pageData.fillLevelPercentage}]]*/ 0.0
+            };
+        </script>
+        <script th:src="@{/js/stock-inventory-view.js}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize the circular progress bar
+                const fillLevelContainer = document.getElementById('fillLevelContainer');
+                createCircularProgressBar(fillLevelContainer, pageDataForJs.fillLevelPercentage);
+
+                // This call will now work because volume-converter.js has been loaded
+                initializeVolumeConverter({
+                    unitSelectorId: 'monitorUnitSelector',
+                    valueElements: [
+                        { valueSpanId: 'monitorCapacityValue', baseValueCm3: pageDataForJs.inventoryCapacity },
+                        { valueSpanId: 'monitorFilledVolumeValue', baseValueCm3: pageDataForJs.totalVolumeInStock }
+                    ]
+                });
+            });
+        </script>
+    </th:block>
+
+</body>
+</html>

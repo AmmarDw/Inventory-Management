@@ -824,9 +824,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // --- Update Pagination Controls based on backend flags ---
         console.log(`Updating pagination controls: hasNext=${hasNext}, hasPrevious=${hasPrevious}`);
         updatePaginationControls(hasNext, hasPrevious);
-
-        // TODO: Rebind action buttons if needed (they are handled by delegation now)
-        // rebindContainerActionButtons();
     }
 
      // --- NEW: Function to Update Pagination Control States ---
