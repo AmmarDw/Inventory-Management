@@ -130,7 +130,7 @@ public class ProductController {
         private List<String> optionIds;
         private List<String> newCategoryNames;
         private List<String> newOptionValues;
-        private Long price;
+        private BigDecimal price;
         private String distanceUnit;
         private BigDecimal height;
         private BigDecimal width;

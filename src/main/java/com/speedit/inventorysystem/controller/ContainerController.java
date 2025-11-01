@@ -203,17 +203,7 @@ public class ContainerController {
             Pageable pageable = PageRequest.of(page, size, sort);
 
             // Call the service method
-            Page<ProductSummaryDTO> productPage = containerService.getProductSummariesForDropdown(q, pageable);
-
-            // Prepare the response data
-            Map<String, Object> response = new HashMap<>();
-            response.put("content", productPage.getContent());
-            response.put("page", productPage.getNumber());
-            response.put("size", productPage.getSize());
-            response.put("totalElements", productPage.getTotalElements());
-            response.put("totalPages", productPage.getTotalPages());
-            // Add 'lastPage' if backend handles searching subsequent pages internally
-            // response.put("lastPageChecked", lastPageChecked); // If applicable
+            Map<String, Object> response = containerService.getProductSummariesForDropdown(q, pageable);
 
             return ResponseEntity.ok(response);
 

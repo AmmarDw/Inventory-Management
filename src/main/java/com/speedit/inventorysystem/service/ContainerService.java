@@ -211,7 +211,7 @@ public class ContainerService {
      * @param pageable   Original pagination request (page, size, sort).
      * @return A Page of ProductSummaryDTO objects, potentially exceeding the original size if enough matches are found quickly.
      */
-    public Page<ProductSummaryDTO> getProductSummariesForDropdown(String searchTerm, Pageable pageable) {
+    public Map<String, Object> getProductSummariesForDropdown(String searchTerm, Pageable pageable) {
         final int originalPageSize = pageable.getPageSize();
         final int originalPageNumber = pageable.getPageNumber();
         final Sort sort = pageable.getSort();
@@ -353,11 +353,15 @@ public class ContainerService {
             estimatedTotalPages = 1;
         }
 
-        // --- Return the Page ---
-        Pageable originalPageableForResponse = PageRequest.of(originalPageNumber, originalPageSize, sort);
-        // Returning the actual count of results found in this specific fetch cycle
-        long actualResultCount = finalFilteredResults.size();
-        return new PageImpl<>(finalFilteredResults, originalPageableForResponse, actualResultCount);
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", finalFilteredResults);
+        response.put("page", originalPageNumber);
+        response.put("size", originalPageSize);
+        response.put("totalElements", finalFilteredResults.size());
+        response.put("totalPages", estimatedTotalPages);
+        response.put("hasMore", hasMoreBaseProducts || hasMoreContainers);
+
+        return response;
         // Or potentially return totalElementsEstimate if you prefer it for pagination controls,
         // understanding it's an estimate: return new PageImpl<>(finalFilteredResults, originalPageableForResponse, totalElementsEstimate);
     }

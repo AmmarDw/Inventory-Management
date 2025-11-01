@@ -33,9 +33,10 @@ public class Product extends BaseEntity {
     @PositiveOrZero
     private Integer barcodeChecksum;
 
+    @Column(name = "price", precision = 15, scale = 2)
     @NotNull
     @Positive
-    private Long price;
+    private BigDecimal price;
 
     @ManyToMany
     @JoinTable(name = "product_option_mapping",

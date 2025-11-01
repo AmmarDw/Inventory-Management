@@ -19,7 +19,7 @@ public class ContainerRequestDTO {
     // --- Fields for Parent Product Creation ---
     @NotNull
     @Positive
-    private Long parentProductPrice; // Price of the new container product
+    private BigDecimal parentProductPrice; // Price of the new container product
     @NotNull private String distanceUnit;
     @NotNull private BigDecimal height;
     @NotNull private BigDecimal width;

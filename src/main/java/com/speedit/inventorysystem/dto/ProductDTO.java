@@ -10,7 +10,7 @@ import java.util.List;
 public class ProductDTO {
     private final Integer productId;
     private final String fullBarcode;
-    private final Long price;
+    private final BigDecimal price;
     private final List<ProductOptionDTO> productOptions;
     private final Integer totalStock;
     private final BigDecimal volume;
@@ -23,7 +23,7 @@ public class ProductDTO {
     private final String updatedBy;
     private final byte[] barcodeImage;
 
-    public ProductDTO(Integer productId, String fullBarcode, Long price,
+    public ProductDTO(Integer productId, String fullBarcode, BigDecimal price,
                       List<ProductOptionDTO> productOptions, Integer totalStock,
                       BigDecimal volume, BigDecimal height, BigDecimal width, BigDecimal length,
                       LocalDateTime createdAt, String createdBy,

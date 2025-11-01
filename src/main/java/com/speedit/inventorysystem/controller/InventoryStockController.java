@@ -6,6 +6,7 @@ import com.speedit.inventorysystem.dto.ProductStockDTO;
 import com.speedit.inventorysystem.dto.UnloadRequestDTO;
 import com.speedit.inventorysystem.repository.InventoryRepository;
 import com.speedit.inventorysystem.repository.ProductRepository;
+import com.speedit.inventorysystem.service.ContainerService;
 import com.speedit.inventorysystem.service.InventoryStockService;
 import com.speedit.inventorysystem.service.ProductService;
 import jakarta.validation.Valid;
@@ -14,6 +15,9 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,21 +26,37 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/inventory-stock")
 public class InventoryStockController {
 
     private static final Logger logger = LoggerFactory.getLogger(InventoryStockController.class);
+    @Autowired private ContainerService containerService; // Inject ContainerService
     @Autowired private InventoryStockService stockService;
     @Autowired private InventoryRepository inventoryRepository;
     @Autowired private ProductRepository productRepository;
 
+
     @GetMapping("/load")
     public String showLoadForm(Model model) {
         model.addAttribute("inventories", inventoryRepository.findAll());
-        model.addAttribute("products", productRepository.findAll());
         model.addAttribute("loadDto", new LoadStockDto());
+
+        // ✨ NEW: Fetch initial searchable product data
+        try {
+            // Fetch first page (e.g., 10 items) with empty search
+            Sort sort = Sort.by(Sort.Direction.ASC, "productId");
+            Pageable initialPageable = PageRequest.of(0, 10, sort); // Fetch 10 initially
+            Map<String, Object> initialProductData = containerService.getProductSummariesForDropdown("", initialPageable);
+            model.addAttribute("initialProductData", initialProductData);
+        } catch (Exception e) {
+            System.err.println("Error fetching initial product data for load form: " + e.getMessage());
+            model.addAttribute("initialProductData", Map.of("content", List.of(), "hasNext", false)); // Provide empty defaults
+            // Optionally add an error message to the model
+        }
+
         return "load-new-products";
     }
 
@@ -48,7 +68,15 @@ public class InventoryStockController {
 
         if (br.hasErrors()) {
             model.addAttribute("inventories", inventoryRepository.findAll());
-            model.addAttribute("products", productRepository.findAll());
+            // ✨ Re-fetch initial product data if validation fails
+            try {
+                Sort sort = Sort.by(Sort.Direction.ASC, "productId");
+                Pageable initialPageable = PageRequest.of(0, 10, sort);
+                Map<String, Object> initialProductData = containerService.getProductSummariesForDropdown("", initialPageable);
+                model.addAttribute("initialProductData", initialProductData);
+            } catch (Exception e) {
+                model.addAttribute("initialProductData", Map.of("content", List.of(), "hasNext", false));
+            }
             return "load-new-products";
         }
 
@@ -57,10 +85,18 @@ public class InventoryStockController {
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("inventories", inventoryRepository.findAll());
-            model.addAttribute("products", productRepository.findAll());
+            // ✨ Re-fetch initial product data on service error
+            try {
+                Sort sort = Sort.by(Sort.Direction.ASC, "productId");
+                Pageable initialPageable = PageRequest.of(0, 10, sort);
+                Map<String, Object> initialProductData = containerService.getProductSummariesForDropdown("", initialPageable);
+                model.addAttribute("initialProductData", initialProductData);
+            } catch (Exception e) {
+                model.addAttribute("initialProductData", Map.of("content", List.of(), "hasNext", false));
+            }
             return "load-new-products";
         }
-        return "redirect:/inventory/manage";
+        return "redirect:/monitor-stock/inventory/" + dto.getInventoryId() + "?viewBy=product"; // Or wherever you want to redirect after success
     }
 
     // Serve HTML form

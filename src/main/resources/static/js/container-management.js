@@ -7,7 +7,7 @@ let currentSearchTerm = '';
 let currentPage = 0;
 let isLoading = false; // Flag to prevent multiple simultaneous requests
 let hasMoreData = true; // Flag to indicate if more data might exist
-const PAGE_SIZE = 20; // Should match backend default or be configurable
+const PAGE_SIZE = 5; // Should match backend default or be configurable
 let searchDebounceTimer = null;
 const SEARCH_DEBOUNCE_DELAY = 800; // milliseconds
 
@@ -23,6 +23,8 @@ let currentPaginationContext = {
 let currentEditContainerId = null;
 
 document.addEventListener('DOMContentLoaded', function () {
+  // let scrollHandler = null;
+
     // --- Shared logic reference ---
     // This script relies on functions defined in management.js:
     // - getCSRFToken() for CSRF handling
@@ -118,11 +120,11 @@ document.addEventListener('DOMContentLoaded', function () {
         isLoading = false;
         hasMoreData = true;
         // Destroy and re-initialize Choices.js for a clean state in create mode
-        if (childProductChoicesInstance) {
-            childProductChoicesInstance.destroy();
-            childProductChoicesInstance = null;
+        const childProductSelect = document.querySelector('#childProductId.child-product-select');
+        if (childProductSelect) {
+            // destroyProductDropdownInstance(childProductSelect);
+            initializeChildProductChoices(childProductSelect);
         }
-        initializeChildProductChoices();
         openModal(containerFormModal);
     }
 
@@ -430,178 +432,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- Initialize Child Product Choices for Create/Edit Modal ---
-    function initializeChildProductChoices() {
-        const childProductSelect = document.querySelector('#childProductId.child-product-select');
-        console.log("Selected childProductSelect element:", childProductSelect);
-        if (!childProductSelect) {
-            console.error("Child product select element (#childProductId.child-product-select) not found for Choices.js initialization.");
-            return;
-        }
-
-        if (childProductChoicesInstance) {
-            childProductChoicesInstance.destroy();
-            childProductChoicesInstance = null;
-        }
-
-        console.log("Initializing Choices.js for child product dropdown.");
-        childProductChoicesInstance = new Choices(childProductSelect, {
-            searchEnabled: true,
-            shouldSort: false,
-            placeholderValue: 'Search by ID or product details...',
-            noResultsText: 'No products/containers found',
-            searchPlaceholderValue: 'Type to search...',
-            searchFloor: 0,
-            searchResultLimit: 50,
-            searchChoices: false,
-            allowHTML: true,
-            callbackOnInit: function () {
-                console.log("Choices.js initialized for child product dropdown.");
-            }
-        });
-
-        if (childProductChoicesInstance && childProductChoicesInstance.passedElement) {
-            childProductChoicesInstance.passedElement.element.addEventListener('showDropdown', function (event) {
-                console.log("Choices.js 'showDropdown' event triggered.");
-                if (currentPage === 0 && childProductChoicesInstance.config.choices.length <= 1) {
-                    console.log("Dropdown opened and appears empty, loading initial data (Page 0).");
-                    currentSearchTerm = '';
-                    currentPage = 0;
-                    hasMoreData = true;
-                    childProductChoicesInstance.clearStore();
-                    childProductChoicesInstance.setChoices([{ value: '', label: 'Loading...', disabled: true }], 'value', 'label', true);
-                    loadChoicesData(currentSearchTerm, 0);
-                } else {
-                    console.log("Dropdown opened, data might already be present or a search was performed.");
-                }
-            });
-            console.log("Attached 'showDropdown' event listener.");
-
-            childProductChoicesInstance.passedElement.element.addEventListener('search', function (event) {
-                const newSearchTerm = event.detail.value ? event.detail.value.trim() : '';
-                console.log("Choices.js 'search' event triggered. Search Term:", `'${newSearchTerm}'`);
-
-                if (newSearchTerm !== currentSearchTerm) {
-                    currentSearchTerm = newSearchTerm;
-                    currentPage = 0;
-                    hasMoreData = true;
-                    childProductChoicesInstance.clearStore();
-                    if (newSearchTerm !== '') {
-                        childProductChoicesInstance.setChoices([{ value: '', label: 'Searching...', disabled: true }], 'value', 'label', true);
-                    } else {
-                        childProductChoicesInstance.setChoices([{ value: '', label: 'Loading...', disabled: true }], 'value', 'label', true);
-                    }
-                }
-
-                clearTimeout(searchDebounceTimer);
-                searchDebounceTimer = setTimeout(() => {
-                    console.log("Debounce timer finished. Searching for:", currentSearchTerm);
-                    loadChoicesData(currentSearchTerm, 0);
-                }, SEARCH_DEBOUNCE_DELAY);
-            });
-            console.log("Attached 'search' event listener.");
-        } else {
-            console.error("Could not attach 'search' event listener.");
-        }
-
-        const choicesList = childProductSelect.closest('.choices')?.querySelector('.choices__list--dropdown');
-        console.log("Found choicesList for scroll listener:", choicesList);
-        if (choicesList) {
-            let scrollTimeout;
-            choicesList.addEventListener('scroll', function () {
-                console.log("DEBUG: Scroll event on choicesList detected.");
-                window.clearTimeout(scrollTimeout);
-                scrollTimeout = window.setTimeout(function () {
-                    const { scrollTop, scrollHeight, clientHeight } = choicesList;
-                    console.log(`DEBUG: ScrollTop: ${scrollTop}, ClientHeight: ${clientHeight}, ScrollHeight: ${scrollHeight}`);
-                    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 5; // 5px threshold
-                    console.log("DEBUG: Is near bottom?", isNearBottom, "isLoading?", isLoading, "hasMoreData?", hasMoreData);
-
-                    if (isNearBottom && !isLoading && hasMoreData) {
-                        console.log("Near bottom of dropdown, loading more data...");
-                        loadChoicesData(currentSearchTerm, currentPage + 1);
-                    } else if (isNearBottom && !hasMoreData) {
-                         console.log("Near bottom, but no more data available (hasMoreData is false).");
-                    } else if (isNearBottom && isLoading) {
-                         console.log("Near bottom, but a load request is already in progress (isLoading is true).");
-                    }
-                }, 100);
-            });
-            console.log("Attached 'scroll' event listener to choicesList.");
-        } else {
-            console.warn("Could not find Choices dropdown list for scroll listener.");
-        }
-    }
-
-    // --- Load Data for Choices.js ---
-    function loadChoicesData(searchTerm, page) {
-        if (isLoading) {
-            console.log("Load request ignored, already loading.");
-            return;
-        }
-
-        isLoading = true;
-        console.log(`Loading data - Search: '${searchTerm}', Page: ${page}`);
-
-        fetch(`/containers/products/searchable?q=${encodeURIComponent(searchTerm)}&page=${page}&size=${PAGE_SIZE}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Data fetched for page", page, ":", data);
-                const choicesData = data.content.map(item => ({
-                    value: item.productId.toString(),
-                    label: item.displayText
-                }));
-
-                if (page === 0) {
-                    childProductChoicesInstance.clearStore();
-                    if (choicesData.length > 0) {
-                        childProductChoicesInstance.setChoices(choicesData, 'value', 'label', false);
-                    } else {
-                        childProductChoicesInstance.setChoices([{ value: '', label: 'No products/containers found', disabled: true }], 'value', 'label', true);
-                    }
-                } else {
-                    if (choicesData.length > 0) {
-                        // Choices.js setChoices with false as last arg should append
-                        // But behavior might depend on version/options. Check docs.
-                        // If append doesn't work reliably, might need to get current choices,
-                        // merge arrays, clear, and setChoices with merged array.
-                        // Let's try simple append first.
-                        childProductChoicesInstance.setChoices(choicesData, 'value', 'label', false);
-                        console.log(`Appended ${choicesData.length} items to dropdown.`);
-                    } else {
-                         console.log("No more data found for page", page);
-                    }
-                }
-
-                currentPage = page; // Update current page to the one just loaded
-                if (data.content.length < PAGE_SIZE) {
-                     hasMoreData = false;
-                     console.log("Reached end of available data.");
-                } else {
-                    hasMoreData = true; // Assume more unless proven otherwise
-                }
-
-                isLoading = false;
-                console.log("Data loading finished. Current Page:", currentPage, "Has More:", hasMoreData);
-            })
-            .catch(error => {
-                console.error('Error fetching searchable products for page', page, ':', error);
-                isLoading = false;
-                if (page === 0) {
-                    childProductChoicesInstance.clearStore();
-                    childProductChoicesInstance.setChoices([{ value: '', label: 'Error loading results', disabled: true }], 'value', 'label', true);
-                } else {
-                    // For subsequent pages, maybe just log or show a brief message if Choices allows
-                    // Adding an error item to the end might be tricky.
-                    console.error("Error appending data to dropdown.");
-                }
-            });
-    }
 
     // --- Save Container Function (Handles Create & Edit) ---
     function saveContainer() {
@@ -1091,35 +921,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 const childProductSelect = document.getElementById('childProductId');
                 if (childProductSelect && childProductId) {
                     // Ensure Choices.js is initialized
-                    if (!childProductChoicesInstance) {
-                         initializeChildProductChoices(); // Initialize if not already done
+                    const childProductSelect = document.querySelector('#childProductId.child-product-select');
+                    let instance = getProductDropdownInstance(childProductSelect);
+                    if (!instance) {
+                        instance = initializeChildProductChoices(childProductSelect);
                     }
 
-                    // After ensuring Choices.js is initialized, add the specific item and select it
+                    // Add the specific item and select it
                     setTimeout(() => {
-                         if (childProductChoicesInstance) {
-                             try {
-                                 // Add the fetched child product summary to Choices
-                                 childProductChoicesInstance.setChoices([{
-                                     value: childProductSummary.productId.toString(),
-                                     label: childProductSummary.displayText
-                                 }], 'value', 'label', false); // Append
-                                 console.log("Added child product summary to dropdown for edit:", childProductSummary);
+                        if (instance && instance.choicesInstance) {
+                            try {
+                                // Add the fetched child product summary to Choices
+                                instance.choicesInstance.setChoices([{
+                                    value: childProductSummary.productId.toString(),
+                                    label: childProductSummary.displayText
+                                }], 'value', 'label', false);
+                                console.log("Added child product summary to dropdown for edit:", childProductSummary);
 
-                                 // Now set the selected value
-                                 childProductChoicesInstance.setChoiceByValue(childProductId.toString());
-                                 console.log("Set child product choice for edit:", childProductId);
-                             } catch (e) {
-                                 console.error("Error setting choice by value in edit mode:", e);
-                                 // Fallback handled within setChoiceByValue try/catch
-                             }
-                         }
-                    }, 100); // Small delay
+                                // Now set the selected value
+                                instance.choicesInstance.setChoiceByValue(childProductId.toString());
+                                console.log("Set child product choice for edit:", childProductId);
+                            } catch (e) {
+                                console.error("Error setting choice by value in edit mode:", e);
+                            }
+                        }
+                    }, 100);
 
                 } else {
                     console.warn("Could not set child product in dropdown for edit. Select element or ID missing.");
                     if (!childProductChoicesInstance) {
-                         initializeChildProductChoices();
+                         initializeChildProductChoices(document.querySelector('#childProductId.child-product-select'));
                     }
                 }
 

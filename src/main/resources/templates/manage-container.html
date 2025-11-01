@@ -395,7 +395,6 @@
   <section layout:fragment="pageScripts">
     <!-- Add Choices.js JS BEFORE your container-management.js -->
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js  "></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css  ">
 
     <!-- Include JsBarcode for barcode generation -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js  "></script>
@@ -418,6 +417,9 @@
 
     <!-- Shared functionality for goods management -->
     <script th:src="@{/js/goods-management.js}"></script>
+
+    <!-- Shared product search dropdown functionality -->
+    <script th:src="@{/js/product-search-dropdown.js}"></script>
 
     <!-- Container-specific management functions -->
     <script th:src="@{/js/container-management.js}"></script>

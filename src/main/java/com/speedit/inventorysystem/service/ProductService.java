@@ -228,36 +228,64 @@ public class ProductService {
             );
 
             if (options == null) {
-                return ResponseEntity.badRequest().body("Error creating options");
+                // Let the catch block handle this or return specific error
+                throw new IllegalArgumentException("Error processing product options.");
             }
+
+            // --- Validate for Duplicate Categories ---
+            Set<Integer> uniqueCategoryIds = new HashSet<>();
+            for (ProductOption option : options) {
+                OptionCategory category = option.getCategory(); // Assumes Category is available
+                if (category == null) {
+                    // Throw an exception for missing category info
+                    throw new IllegalStateException("Option " + option.getOptionId() + " is missing required category information.");
+                }
+                if (!uniqueCategoryIds.add(category.getOptionCategoryId())) {
+                    // ✨ Throw exception instead of returning ResponseEntity
+                    throw new IllegalArgumentException("Duplicate category selection: Cannot select multiple options from the same category '" + category.getCategoryName() + "'.");
+                }
+            }
+            // --- End Validation ---
 
             // Check for duplicate product
             if (isDuplicateProduct(options)) {
+                // Keep the specific conflict status for this case
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body("Product with the same options already exists");
             }
 
+            // --- Dimension Calculation ---
             MeasurementUnitEnum unit = MeasurementUnitEnum.valueOf(request.getDistanceUnit().toUpperCase());
             BigDecimal factor = unit.getToBaseFactor();
-
             BigDecimal heightInCm = request.getHeight().multiply(factor);
             BigDecimal widthInCm = request.getWidth().multiply(factor);
             BigDecimal lengthInCm = request.getLength().multiply(factor);
             BigDecimal volumeInCm3 = heightInCm.multiply(widthInCm).multiply(lengthInCm);
+            // --- End Dimension Calculation ---
 
+            // --- Product Creation ---
             Product product = new Product();
-            product.setPrice(request.getPrice());
+            product.setPrice(request.getPrice()); // Assuming BigDecimal now
             product.setProductOptions(options);
             product.setHeight(heightInCm);
             product.setWidth(widthInCm);
             product.setLength(lengthInCm);
             product.setVolume(volumeInCm3);
+            // --- End Product Creation ---
 
-            createProduct(product);
-            return ResponseEntity.ok().build();
+            createProduct(product); // Assuming this saves the product and handles barcode
+            // Return CREATED status on success
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Product created successfully."));
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // ✨ Catch the specific validation exceptions thrown above
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Validation Error: " + e.getMessage());
         } catch (Exception e) {
+            // General catch-all for other unexpected errors
+            // Log the exception in a real application: log.error("Error creating product", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error creating product: " + e.getMessage());
+                    .body("Error creating product: An unexpected error occurred.");
         }
     }
 

@@ -29,7 +29,7 @@ public class ContainerViewDTO {
     private BigDecimal height;
     private BigDecimal width;
     private BigDecimal length;
-    private Long price; // Price of the parent product
+    private BigDecimal price; // Price of the parent product
     private Integer totalStock; // Calculated stock for the parent product
     private String fullBarcode; // Full barcode string for the parent product
 

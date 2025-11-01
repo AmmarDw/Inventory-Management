@@ -17,6 +17,9 @@
     <h2>Load New Products into Inventory</h2>
     <form th:action="@{/inventory-stock/load}" th:object="${loadDto}" method="post">
       
+      <!-- CSRF Token -->
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      
       <!-- 1. Select Inventory -->
       <div class="form-group">
         <label for="inventory">Inventory</label>
@@ -27,7 +30,6 @@
                     th:value="${inv.inventoryId}"
                     th:text="${inv.inventoryId + ' – ' + inv.inventoryType.getDisplayName + ' – ' + inv.location}"></option>
           </select>
-          <!-- <button type="button" class="filter-btn" id="filter-inventory-btn">🔍</button> -->
         </div>
         <div th:if="${#fields.hasErrors('inventoryId')}" class="error-message"
              th:errors="*{inventoryId}"></div>
@@ -35,22 +37,19 @@
 
       <!-- 2. Product + Amount Groups -->
       <div id="stock-groups-container">
+        <!-- Initial stock group - KEEP THIS -->
         <div class="stock-group">
           <div class="form-group">
             <label>Product</label>
             <div class="select-with-filter">
-              <select th:field="*{productIds}" class="product-select" required>
-                <option value="" disabled>Select product</option>
-                <option th:each="p : ${products}"
-                        th:value="${p.productId}"
-                        th:text="${p.productId + ' – ' + p.getProductOptionsDisplay}"></option>
+              <select class="product-select" required>
+                <option value="" disabled selected>Select product</option>
               </select>
-              <!-- <button type="button" class="filter-btn product-filter-btn">🔍</button> -->
             </div>
           </div>
           <div class="form-group">
             <label>Amount</label>
-            <input type="number" th:field="*{amounts}" min="0" required>
+            <input type="number" min="0" required>
           </div>
           <button type="button" class="remove-stock-group btn btn-danger">Remove</button>
         </div>
@@ -69,7 +68,21 @@
 
 <section layout:fragment="pageScripts">
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    
+  <script th:src="@{/js/product-search-dropdown.js}"></script>
+  
   <script th:src="@{/js/load-new-products.js}"></script>
+
+  <script th:inline="javascript">
+      // Inject initial data from the controller
+      const initialProductData = /*[[${initialProductData}]]*/ { content: [], hasNext: false };
+      console.log('Initial product data:', initialProductData);
+  </script>
+  <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          lucide.createIcons();
+      });
+  </script>
 </section>
 </body>
 </html>
