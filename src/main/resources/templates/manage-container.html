@@ -272,12 +272,12 @@
           <div class="detail-item actions-container">
             <a id="viewInventoryStockLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
               <i data-lucide="package"></i>
-              <span>View Inventory Stock</span>
+              <span>View Container Stock by Inventories</span>
             </a>
 
             <a id="viewOrdersLink" class="btn btn-secondary btn-with-icon" style="text-decoration: unset;" href="#">
               <i data-lucide="shopping-cart"></i>
-              <span>View Orders</span>
+              <span>View Container Stock by Orders</span>
             </a>
           </div>
         </div>
@@ -394,10 +394,10 @@
 
   <section layout:fragment="pageScripts">
     <!-- Add Choices.js JS BEFORE your container-management.js -->
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js  "></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
     <!-- Include JsBarcode for barcode generation -->
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js  "></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <!-- Inject the unified containerData structure from the backend -->
     <script th:inline="javascript">

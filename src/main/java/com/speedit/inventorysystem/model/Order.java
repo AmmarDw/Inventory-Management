@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,8 +28,22 @@ public class Order extends BaseEntity {
     @GenericGenerator(name = "native", strategy = "native")
     private Integer orderId;
 
+    // TODO update related code to follow this change - start
     @NotBlank
     private String deliveryLocation;
+
+    /**
+     * The latitude coordinate. Essential for all routing calculations.
+     */
+    @Column(precision = 10, scale = 6)
+    private BigDecimal latitude;
+
+    /**
+     * The longitude coordinate. Essential for all routing calculations.
+     */
+    @Column(precision = 10, scale = 6)
+    private BigDecimal longitude;
+    // TODO - end
 
     @NotNull
     @Enumerated(EnumType.STRING)

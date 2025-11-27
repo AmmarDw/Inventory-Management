@@ -2,8 +2,10 @@ package com.speedit.inventorysystem.repository;
 
 import com.speedit.inventorysystem.dto.OrderDTO;
 import com.speedit.inventorysystem.dto.ProductStockDTO;
+import com.speedit.inventorysystem.enums.InventoryTypeEnum;
 import com.speedit.inventorysystem.model.Inventory;
 import com.speedit.inventorysystem.model.InventoryStock;
+import com.speedit.inventorysystem.model.OrderItem;
 import com.speedit.inventorysystem.model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -63,4 +65,38 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
     @Query("SELECT COALESCE(SUM(s.amount), 0) FROM InventoryStock s " +
             "WHERE s.product.productId = :productId")
     int sumStockByProductId(@Param("productId") Integer productId);
+
+    /**
+     * Return available stock rows (orderItem is null) for a given product
+     * and inventory types (WAREHOUSE, VAN). Stores are excluded here.
+     */
+    @Query("""
+       SELECT s FROM InventoryStock s
+       JOIN s.inventory inv
+       WHERE s.product.productId = :productId
+         AND s.orderItem IS NULL
+         AND inv.status = true
+         AND inv.inventoryType IN :allowedTypes
+    """)
+    List<InventoryStock> findAvailableByProductAndTypes(
+            @Param("productId") Integer productId,
+            @Param("allowedTypes") List<InventoryTypeEnum> allowedTypes
+    );
+
+    /**
+     * Find reserved stock row for a specific OrderItem + Inventory + Product.
+     * This is used when we "reserve" stock: if a row exists, we increment it;
+     * otherwise we create a new one.
+     */
+    @Query("""
+       SELECT s FROM InventoryStock s
+       WHERE s.orderItem = :orderItem
+         AND s.inventory = :inventory
+         AND s.product = :product
+    """)
+    Optional<InventoryStock> findReservedByOrderItemAndInventoryAndProduct(
+            @Param("orderItem") OrderItem orderItem,
+            @Param("inventory") Inventory inventory,
+            @Param("product") Product product
+    );
 }

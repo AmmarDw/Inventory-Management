@@ -1,7 +1,5 @@
 package com.speedit.inventorysystem.enums;
 
 public enum OrderStatusEnum {
-    PLACED, CONFIRMED, ALLOCATED, DELIVERING, FULFILLED, DELAYED, CANCELLED
+    PLACED, ALLOCATED, DELIVERING, FULFILLED, CANCELLED
 }
-
-// TODO remove CONFIRMED and DELAYED

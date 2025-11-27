@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-
+// TODO, get red of it
 @Configuration // Or add this method to your @SpringBootApplication class
 public class JacksonConfig { // Or use your main application class name
 

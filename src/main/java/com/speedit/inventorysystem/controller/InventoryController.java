@@ -1,6 +1,7 @@
 package com.speedit.inventorysystem.controller;
 
 import com.speedit.inventorysystem.dto.InventoryDTO;
+import com.speedit.inventorysystem.dto.InventoryRequest;
 import com.speedit.inventorysystem.model.Inventory;
 import com.speedit.inventorysystem.enums.InventoryTypeEnum;
 import com.speedit.inventorysystem.repository.InventoryRepository;
@@ -81,14 +82,5 @@ public class InventoryController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
-    }
-
-    @Data
-    public static class InventoryRequest {
-        private String inventoryType;
-        private String location;
-        private boolean status;
-        private BigDecimal capacity;
-        private String capacityUnit;
     }
 }

@@ -30,15 +30,23 @@ public class StockMonitoringService {
     @Autowired private OrderItemRepository orderItemRepository;
 
     public Map<String, Object> prepareStockMonitorPageData(Inventory inventory) {
-        List<InventoryStock> stockRecords = inventory.getInventoryStocks();
-
         // 1. Prepare the simple DTO for Thymeleaf
         StockMonitorDTO pageData = new StockMonitorDTO();
         pageData.setInventory(inventory);
-        calculateFillLevel(pageData, inventory, stockRecords);
+
+        // Get the calculations
+        Map<String, BigDecimal> fillMetrics = calculateFillLevel(inventory);
+
+        // Set Total Volume
+        pageData.setTotalVolumeInStock(fillMetrics.get("totalVolume"));
+
+        // Calculate and Set Percentage (Ratio * 100)
+        BigDecimal ratio = fillMetrics.get("fillLevelRatio");
+        BigDecimal percentage = ratio.multiply(new BigDecimal("100"));
+        pageData.setFillLevelPercentage(percentage.doubleValue());
 
         // 2. Prepare the large, flat JSON data object for JavaScript
-        StockDataJson jsonData = buildJsonData(stockRecords);
+        StockDataJson jsonData = buildJsonData(inventory.getInventoryStocks());
 
         // 3. Return both objects in a map
         return Map.of(
@@ -47,23 +55,31 @@ public class StockMonitoringService {
         );
     }
 
-    private void calculateFillLevel(StockMonitorDTO pageData, Inventory inventory, List<InventoryStock> stockRecords) {
+    /**
+     * Calculates the total volume used and the fill level ratio.
+     * Returns a Map containing "totalVolume" and "fillLevelRatio".
+     */
+    public Map<String, BigDecimal> calculateFillLevel(Inventory inventory) {
         if (inventory.getCapacity() == null || inventory.getCapacity().compareTo(BigDecimal.ZERO) == 0) {
-            pageData.setTotalVolumeInStock(BigDecimal.ZERO);
-            pageData.setFillLevelPercentage(0.0);
-            return;
+            return Map.of(
+                    "totalVolume", BigDecimal.ZERO,
+                    "fillLevelRatio", BigDecimal.ZERO
+            );
         }
+
+        List<InventoryStock> stockRecords = inventory.getInventoryStocks();
 
         BigDecimal totalVolume = stockRecords.stream()
                 .map(stock -> stock.getProduct().getVolume().multiply(new BigDecimal(stock.getAmount())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Set the total volume on the DTO
-        pageData.setTotalVolumeInStock(totalVolume);
+        // Calculate ratio (Volume / Capacity). Using higher scale for precision before percentage calc.
+        BigDecimal ratio = totalVolume.divide(inventory.getCapacity(), 6, RoundingMode.HALF_UP);
 
-        BigDecimal percentage = totalVolume.divide(inventory.getCapacity(), 4, RoundingMode.HALF_UP)
-                .multiply(new BigDecimal("100"));
-        pageData.setFillLevelPercentage(percentage.doubleValue());
+        return Map.of(
+                "totalVolume", totalVolume,
+                "fillLevelRatio", ratio
+        );
     }
 
     private StockDataJson buildJsonData(List<InventoryStock> stockRecords) {

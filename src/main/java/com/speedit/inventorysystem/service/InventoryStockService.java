@@ -124,7 +124,7 @@ public class InventoryStockService {
         } else {
             // Deliver to client - remove from inventory
             if (stock.getOrderItem() == null) {
-                // For available stock, we need to associate with order
+                // TODO For available stock, we need to associate with order
                 if (request.getOrder() == null) {
                     throw new IllegalArgumentException("Cannot deliver available stock to client without an order");
                 }

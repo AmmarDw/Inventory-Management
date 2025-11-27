@@ -23,7 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Inventory extends BaseEntity {
- 
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
     @GenericGenerator(name = "native", strategy = "native")
@@ -33,8 +33,24 @@ public class Inventory extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private InventoryTypeEnum inventoryType;
 
-    @NotBlank(message = "Please enter a location")
+    /**
+     * Stores a human-readable description of the location (e.g., "Main Warehouse, King Fahd Dist.")
+     * This description can be reverse-geocoded from the coordinates.
+     */
+    @NotBlank(message = "Please enter a location description")
     private String location;
+
+    /**
+     * The latitude coordinate. Essential for all routing calculations.
+     */
+    @Column(precision = 10, scale = 6)
+    private BigDecimal latitude;
+
+    /**
+     * The longitude coordinate. Essential for all routing calculations.
+     */
+    @Column(precision = 10, scale = 6)
+    private BigDecimal longitude;
 
     private boolean status; // true = operating (default), false = out of service
 
